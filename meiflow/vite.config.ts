@@ -21,8 +21,46 @@ export default defineConfig({
         theme_color: '#0D1117',
         background_color: '#0D1117',
         display: 'standalone',
+        // display_override: tenta fullscreen/standalone primeiro — comportamento
+        // de app nativo (sem browser chrome) quando suportado pelo SO.
+        display_override: ['window-controls-overlay', 'standalone', 'minimal-ui'],
         start_url: '/',
+        scope: '/',
+        id: '/',
+        lang: 'pt-BR',
+        dir: 'ltr',
         orientation: 'portrait-primary',
+        categories: ['business', 'finance', 'productivity'],
+        // launch_handler: focus-existing impede que cliques externos abram
+        // múltiplas instâncias — comportamento de aplicativo nativo singleton.
+        launch_handler: {
+          client_mode: ['focus-existing', 'auto'],
+        },
+        prefer_related_applications: false,
+        // App shortcuts no long-press do ícone na home screen Android
+        shortcuts: [
+          {
+            name: 'Novo cliente',
+            short_name: 'Cliente',
+            description: 'Cadastrar um novo cliente',
+            url: '/clients?new=1',
+            icons: [{ src: 'logo-192.png', sizes: '192x192' }],
+          },
+          {
+            name: 'Novo projeto',
+            short_name: 'Projeto',
+            description: 'Criar um novo projeto',
+            url: '/projects?new=1',
+            icons: [{ src: 'logo-192.png', sizes: '192x192' }],
+          },
+          {
+            name: 'Pagamentos',
+            short_name: 'Pagamentos',
+            description: 'Acompanhar pagamentos',
+            url: '/payments',
+            icons: [{ src: 'logo-192.png', sizes: '192x192' }],
+          },
+        ],
         icons: [
           {
             src: 'logo-192.png',

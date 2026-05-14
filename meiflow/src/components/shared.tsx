@@ -1,6 +1,8 @@
+import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useAndroidBack } from '@/hooks/useAndroidBack'
 
 // ─── Modal ──────────────────────────────────────────────────────
 interface ModalProps {
@@ -13,6 +15,19 @@ interface ModalProps {
 }
 
 export function Modal({ open, onClose, title, children, size = 'md', className }: ModalProps) {
+  // No PWA mobile: botão Voltar do Android fecha o modal em vez de sair do app
+  useAndroidBack(open, onClose)
+
+  // Tecla Escape (acessibilidade + desktop)
+  useEffect(() => {
+    if (!open) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+
   if (!open) return null
 
   const widths = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl' }

@@ -13,6 +13,8 @@ import {
 import { useThemeStore } from '@/store/theme'
 import NotificationBell from '@/components/NotificationBell'
 import PWAInstallButton from '@/components/PWAInstallButton'
+import PWANativeShell from '@/components/PWANativeShell'
+import { triggerHaptic } from '@/hooks/useHaptic'
 import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
@@ -28,6 +30,7 @@ export default function AppShell() {
   const { theme, toggleTheme } = useThemeStore()
 
   function handleToggleTheme() {
+    triggerHaptic('selection')
     toggleTheme()
     // Fix 3 — atualiza theme-color da barra de status Android/iOS
     const next = theme === 'dark' ? '#F4F6FA' : '#0D1117'
@@ -37,6 +40,7 @@ export default function AppShell() {
 
   return (
     <div className="flex min-h-dvh" style={{ background: 'var(--bg-0)' }}>
+      <PWANativeShell />
 
       {/* ── Sidebar (lg+) ── */}
       <aside className="hidden lg:flex flex-col w-56 shrink-0 border-r sticky top-0 h-dvh"
@@ -119,6 +123,8 @@ export default function AppShell() {
         >
           {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
             <NavLink key={to} to={to} end={end}
+              onClick={() => triggerHaptic('selection')}
+              data-pwa-tap
               className={({ isActive }) => cn(
                 'flex-1 flex flex-col items-center gap-0.5 pt-2.5 pb-2 min-h-[44px] justify-center',
                 'text-[10px] font-medium transition-all duration-fast',
