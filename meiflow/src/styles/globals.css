@@ -1,0 +1,132 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Light mode (default) ─── */
+:root {
+  --bg-0: #F4F6FA;
+  --bg-1: #EEF2FB;
+  --bg-2: #FFFFFF;
+
+  --text-primary: #0D1117;
+  --text-secondary: #64748B;
+  --text-tertiary: #94A3B8;
+
+  --primary: #1A65C0;
+  --primary-hover: #1557A8;
+  --primary-subtle: rgba(26, 101, 192, 0.1);
+
+  --blueprint: #3B8CE8;
+  --blueprint-grid: rgba(26, 101, 192, 0.07);
+  --blueprint-border: rgba(26, 101, 192, 0.18);
+  --blueprint-text: #1A65C0;
+
+  --border: rgba(0, 0, 0, 0.1);
+  --border-subtle: rgba(0, 0, 0, 0.06);
+
+  --status-paid: #059669;
+  --status-paid-bg: rgba(16, 185, 129, 0.12);
+  --status-pending: #D97706;
+  --status-pending-bg: rgba(245, 158, 11, 0.12);
+  --status-overdue: #DC2626;
+  --status-overdue-bg: rgba(239, 68, 68, 0.12);
+  --status-active: #1A65C0;
+  --status-active-bg: rgba(26, 101, 192, 0.12);
+}
+
+/* ─── Dark mode ─── */
+.dark {
+  --bg-0: #0D1117;
+  --bg-1: #161B27;
+  --bg-2: #1E2537;
+
+  --text-primary: #F1F5F9;
+  --text-secondary: #94A3B8;
+  --text-tertiary: #475569;
+
+  --primary: #3B8CE8;
+  --primary-hover: #60A5FA;
+  --primary-subtle: rgba(59, 140, 232, 0.12);
+
+  --blueprint: #7DD3FC;
+  --blueprint-grid: rgba(59, 140, 232, 0.06);
+  --blueprint-border: rgba(59, 140, 232, 0.2);
+  --blueprint-text: #7DD3FC;
+
+  --border: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(255, 255, 255, 0.04);
+
+  --status-paid: #10B981;
+  --status-paid-bg: rgba(16, 185, 129, 0.15);
+  --status-pending: #F59E0B;
+  --status-pending-bg: rgba(245, 158, 11, 0.15);
+  --status-overdue: #EF4444;
+  --status-overdue-bg: rgba(239, 68, 68, 0.15);
+  --status-active: #3B8CE8;
+  --status-active-bg: rgba(59, 140, 232, 0.15);
+}
+
+/* ─── Base ─── */
+html {
+  background-color: var(--bg-0);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background-color: var(--bg-0);
+  transition: background-color 250ms ease-out, color 250ms ease-out;
+}
+
+/* ─── Blueprint grid utility ─── */
+.blueprint-grid {
+  background-image:
+    linear-gradient(var(--blueprint-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--blueprint-grid) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* ─── Blueprint corner bracket ─── */
+.blueprint-corner::before,
+.blueprint-corner::after {
+  content: '';
+  position: absolute;
+  background: var(--blueprint);
+}
+.blueprint-corner::before { top: 0; left: 0; width: 12px; height: 1px; }
+.blueprint-corner::after  { top: 0; left: 0; width: 1px; height: 12px; }
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
+/* ─── Focus ring ─── */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ─── Fade overlay (opacity only — não conflita com transform de posicionamento) ─── */
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ─── Remove number input spinners ─── */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}

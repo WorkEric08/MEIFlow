@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0D1117" id="theme-color-meta" />
+    <meta name="description" content="Plataforma completa para freelancers e MEIs brasileiros" />
+    <link rel="icon" type="image/png" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <title>MEIFlow</title>
+
+    <!-- Captura beforeinstallprompt antes do bundle React carregar -->
+    <script>
+      window.__deferredInstallPrompt = null;
+      window.addEventListener('beforeinstallprompt', function(e) {
+        e.preventDefault();
+        window.__deferredInstallPrompt = e;
+      });
+
+      // Aplica tema salvo antes do primeiro render (evita flash)
+      (function() {
+        try {
+          var stored = localStorage.getItem('meiflow-theme');
+          var theme = stored ? JSON.parse(stored).state?.theme : 'dark';
+          if (theme !== 'light') document.documentElement.classList.add('dark');
+        } catch(_) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
