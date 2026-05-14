@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import type { InstallState } from '@/hooks/usePWAInstall'
+
+export type InstallState = 'idle' | 'available' | 'installing' | 'installed'
 
 /**
  * Store global para o estado de instalação do PWA.

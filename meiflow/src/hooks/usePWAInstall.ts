@@ -13,7 +13,7 @@ declare global {
   }
 }
 
-export type { } from '@/store/pwa'
+export type { InstallState } from '@/store/pwa'
 
 export function usePWAInstall() {
   const { state, setState } = usePWAStore()

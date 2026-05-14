@@ -136,7 +136,7 @@ export function Field({ label, error, children }: { label: string; error?: strin
 }
 
 // ─── Input style helper ──────────────────────────────────────────
-export const inputCls = (hasError?: boolean) =>
+export const inputCls = (_hasError?: boolean) =>
   cn('w-full px-3 py-2 rounded-input text-sm border outline-none transition-all duration-fast',
     'focus:ring-1')
 

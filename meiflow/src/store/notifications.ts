@@ -85,7 +85,6 @@ export const useNotifStore = create<NotifStore>((set, get) => ({
     if (overdue.length > 0) {
       const title = `${overdue.length} pagamento${overdue.length > 1 ? 's' : ''} em atraso`
       const description = 'Acesse Pagamentos para regularizar.'
-      const key = title + description + today
       const alreadyToday = notifications.some(
         (n) => n.title === title && n.description === description &&
           new Date(n.createdAt).toISOString().slice(0, 10) === today

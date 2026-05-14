@@ -25,6 +25,7 @@ export default function ClientsPage() {
   const [projectModal, setProjectModal] = useState(false)
   const [paymentModal, setPaymentModal] = useState(false)
   function handleNew() { setEditing(null); setModal(true) }
+  function handleEdit(c: Client) { setEditing(c); setModal(true) }
   function handleDelete(id: string) { if (confirm('Remover este cliente?')) deleteClient.mutate(id) }
 
   return (

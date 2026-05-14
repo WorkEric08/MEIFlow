@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { X, FolderKanban, CreditCard, FileText, Plus, Mail, Phone, Building } from 'lucide-react'
 import { useProjectsByClient } from '@/features/projects/hooks'
 import { usePayments } from '@/features/payments/index'

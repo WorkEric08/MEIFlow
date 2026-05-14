@@ -25,7 +25,7 @@ export default function ContractModal({ open, onClose, onCreated }: Props) {
   const { data: clients = [] } = useClients()
   const { data: projects = [] } = useProjects()
   const { profile } = useProfileStore()
-  const [selectedTemplate, setSelectedTemplate] = useState('')
+  const [_selectedTemplate, setSelectedTemplate] = useState('')
   const [step, setStep] = useState<'template' | 'form'>('template')
 
   const { register, handleSubmit, watch, setValue, reset, control, formState: { errors, isDirty } } =
