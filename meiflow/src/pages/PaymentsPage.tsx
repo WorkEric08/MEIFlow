@@ -107,34 +107,69 @@ export default function PaymentsPage() {
           {filtered.map((p) => {
             const client  = clients.find((c) => c.id === p.clientId)
             const project = projects.find((pr) => pr.id === p.projectId)
+            const isPaid    = p.status === 'paid'
+            const isOverdue = p.status === 'overdue'
+            const dueColor  = isOverdue ? 'var(--status-overdue)' : isPaid ? 'var(--status-paid)' : 'var(--text-secondary)'
             return (
               <div key={p.id}
-                className="rounded-card border overflow-hidden"
+                className="rounded-card border overflow-hidden relative"
                 style={{ background: 'var(--bg-1)', borderColor: 'var(--border)' }}>
-                {/* Topo: descrição + status */}
-                <div className="px-4 pt-3.5 pb-2.5">
-                  <div className="flex items-start justify-between gap-3 mb-1.5">
-                    <p className="text-sm font-semibold leading-snug min-w-0 flex-1 break-words"
+                {/* Barra lateral colorida de status — sinal visual rápido */}
+                <span
+                  className="absolute left-0 top-0 bottom-0 w-1"
+                  style={{
+                    background: isPaid ? 'var(--status-paid)'
+                      : isOverdue ? 'var(--status-overdue)'
+                      : 'var(--status-pending)',
+                  }}
+                />
+
+                {/* Topo: descrição + status badge */}
+                <div className="px-4 pt-3.5 pb-2 pl-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-[15px] font-semibold leading-snug min-w-0 flex-1 break-words"
                       style={{ color: 'var(--text-primary)' }}>
                       {p.description}
                     </p>
                     <StatusBadge status={p.status} />
                   </div>
-                  <p className="text-xs leading-snug truncate" style={{ color: 'var(--text-tertiary)' }}>
-                    {client?.name ?? '—'}{project ? ` · ${project.name}` : ''}
-                  </p>
+                  {/* Cliente em destaque, projeto secundário */}
+                  <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs leading-snug">
+                    <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>
+                      {client?.name ?? 'Cliente removido'}
+                    </span>
+                    {project && (
+                      <>
+                        <span style={{ color: 'var(--text-tertiary)' }}>·</span>
+                        <span style={{ color: 'var(--text-tertiary)' }}>{project.name}</span>
+                      </>
+                    )}
+                  </div>
                 </div>
 
-                {/* Meio: vencimento + valor */}
-                <div className="flex items-end justify-between gap-3 px-4 pb-3">
-                  <div className="flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
-                    <Calendar size={12} />
-                    <span>vence {formatDate(p.dueDate)}</span>
+                {/* Linha de destaque: VALOR (esquerda, grande) + VENCIMENTO (direita) */}
+                <div className="px-4 pl-5 pt-1 pb-3 flex items-end justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest"
+                      style={{ color: 'var(--text-tertiary)' }}>
+                      {isPaid ? 'Valor recebido' : 'Valor'}
+                    </p>
+                    <p className="font-mono text-xl font-extrabold tabular-nums leading-tight mt-0.5 break-all"
+                      style={{ color: isOverdue ? 'var(--status-overdue)' : 'var(--text-primary)' }}>
+                      {formatCurrency(p.amount)}
+                    </p>
                   </div>
-                  <span className="font-mono text-base font-bold tabular-nums shrink-0"
-                    style={{ color: p.status === 'overdue' ? 'var(--status-overdue)' : 'var(--text-primary)' }}>
-                    {formatCurrency(p.amount)}
-                  </span>
+                  <div className="text-right shrink-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest"
+                      style={{ color: 'var(--text-tertiary)' }}>
+                      {isPaid ? 'Pago em' : isOverdue ? 'Atrasou em' : 'Vence em'}
+                    </p>
+                    <div className="flex items-center justify-end gap-1 mt-0.5 font-mono text-xs font-semibold tabular-nums"
+                      style={{ color: dueColor }}>
+                      <Calendar size={12} />
+                      <span>{formatDate(p.dueDate)}</span>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Rodapé: ações */}

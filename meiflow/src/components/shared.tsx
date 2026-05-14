@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAndroidBack } from '@/hooks/useAndroidBack'
+import { useScrollLock } from '@/hooks/useScrollLock'
 
 // ─── Modal ──────────────────────────────────────────────────────
 interface ModalProps {
@@ -17,6 +18,10 @@ interface ModalProps {
 export function Modal({ open, onClose, title, children, size = 'md', className }: ModalProps) {
   // No PWA mobile: botão Voltar do Android fecha o modal em vez de sair do app
   useAndroidBack(open, onClose)
+
+  // Trava scroll do fundo enquanto o modal estiver aberto.
+  // O conteúdo interno do modal continua rolando com sua própria barra.
+  useScrollLock(open)
 
   // Tecla Escape (acessibilidade + desktop)
   useEffect(() => {
@@ -34,9 +39,16 @@ export function Modal({ open, onClose, title, children, size = 'md', className }
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center sm:p-4"
+      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center sm:p-4 modal-overscroll"
       style={{ background: 'rgba(0,0,0,0.6)', paddingTop: 'env(safe-area-inset-top)' }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
+      onWheel={(e) => {
+        // Garante que wheel sobre o backdrop não rola o fundo
+        if (e.target === e.currentTarget) e.preventDefault()
+      }}
+      onTouchMove={(e) => {
+        if (e.target === e.currentTarget) e.preventDefault()
+      }}
     >
       <div
         className={cn(
@@ -63,8 +75,11 @@ export function Modal({ open, onClose, title, children, size = 'md', className }
           </button>
         </div>
         <div
-          className="px-5 py-4 overflow-y-auto"
-          style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+          className="px-5 py-4 overflow-y-auto modal-scroll"
+          style={{
+            paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
+            overscrollBehavior: 'contain',
+          }}
         >
           {children}
         </div>

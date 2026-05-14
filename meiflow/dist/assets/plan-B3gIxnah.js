@@ -1,1 +1,0 @@
-import{y as a,z as s}from"./index-C6pY71v5.js";const n={clients:3,activeProjects:2,contractTemplates:1},l=a()(s(t=>({plan:"free",upgradedAt:null,setPlan:e=>t({plan:e,upgradedAt:e==="pro"?new Date:null})}),{name:"meiflow-plan"}));export{n as F,l as u};

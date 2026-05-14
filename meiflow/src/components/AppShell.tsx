@@ -7,10 +7,7 @@ import {
   FileText,
   Link2,
   Settings,
-  Sun,
-  Moon,
 } from 'lucide-react'
-import { useThemeStore } from '@/store/theme'
 import NotificationBell from '@/components/NotificationBell'
 import PWAInstallButton from '@/components/PWAInstallButton'
 import PWANativeShell from '@/components/PWANativeShell'
@@ -27,17 +24,6 @@ const NAV_ITEMS = [
 ]
 
 export default function AppShell() {
-  const { theme, toggleTheme } = useThemeStore()
-
-  function handleToggleTheme() {
-    triggerHaptic('selection')
-    toggleTheme()
-    // Fix 3 — atualiza theme-color da barra de status Android/iOS
-    const next = theme === 'dark' ? '#F4F6FA' : '#0D1117'
-    const meta = document.getElementById('theme-color-meta')
-    if (meta) meta.setAttribute('content', next)
-  }
-
   return (
     <div className="flex min-h-dvh" style={{ background: 'var(--bg-0)' }}>
       <PWANativeShell />
@@ -88,7 +74,7 @@ export default function AppShell() {
       {/* ── Main ── */}
       <div className="flex-1 flex flex-col min-w-0">
 
-        {/* Mobile header — sticky para sumir com scroll-up só visualmente */}
+        {/* Mobile header — apenas marca + notificações + configurações */}
         <header
           className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 border-b backdrop-blur"
           style={{
@@ -101,14 +87,22 @@ export default function AppShell() {
             MEI<span style={{ color: 'var(--primary)' }}>Flow</span>
           </span>
           <div className="flex items-center gap-0.5">
-            <PWAInstallButton />
             <NotificationBell />
-            <button onClick={handleToggleTheme} aria-label="Alternar tema"
+            <NavLink
+              to="/settings"
+              aria-label="Configurações"
               data-pwa-tap
-              className="p-2.5 rounded-input min-h-[40px] min-w-[40px] flex items-center justify-center transition-all hover:opacity-70"
-              style={{ color: 'var(--text-secondary)' }}>
-              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
+              onClick={() => triggerHaptic('selection')}
+              className={({ isActive }) => cn(
+                'p-2.5 rounded-input min-h-[40px] min-w-[40px] flex items-center justify-center transition-all hover:opacity-70',
+                isActive && 'bg-[var(--primary-subtle)]',
+              )}
+              style={({ isActive }) => ({
+                color: isActive ? 'var(--primary)' : 'var(--text-secondary)',
+              })}
+            >
+              <Settings size={18} />
+            </NavLink>
           </div>
         </header>
 

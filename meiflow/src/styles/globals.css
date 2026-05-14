@@ -102,11 +102,40 @@ body {
 .blueprint-corner::before { top: 0; left: 0; width: 12px; height: 1px; }
 .blueprint-corner::after  { top: 0; left: 0; width: 1px; height: 12px; }
 
-/* ─── Scrollbar ─── */
+/* ─── Scrollbar (Webkit/Blink) — fina, azul escuro do projeto ─── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) transparent;
+}
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--primary-hover); background-clip: padding-box; }
+::-webkit-scrollbar-corner { background: transparent; }
+
+/* Scrollbar dedicada para conteúdo de modal — ainda mais fina e contida */
+.modal-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) transparent;
+}
+.modal-scroll::-webkit-scrollbar { width: 5px; }
+.modal-scroll::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 999px;
+}
+.modal-scroll::-webkit-scrollbar-track { background: transparent; }
+
+/* Backdrop do modal — bloqueia overscroll/touch que poderia rolar o fundo */
+.modal-overscroll {
+  overscroll-behavior: contain;
+  touch-action: none;
+}
+.modal-overscroll > * { touch-action: auto; }
 
 /* ─── Focus ring ─── */
 :focus-visible {
@@ -225,12 +254,6 @@ html.pwa-mobile main {
 html.pwa-mobile .pwa-fullbleed {
   margin-left: calc(env(safe-area-inset-left) * -1);
   margin-right: calc(env(safe-area-inset-right) * -1);
-}
-
-/* Esconde scrollbar customizada em mobile — Android nativo usa overlay scrollbar */
-html.pwa-mobile ::-webkit-scrollbar {
-  width: 0;
-  height: 0;
 }
 
 /* Bottom nav: ícones um pouco maiores para alvos de toque (44x44 min Material) */
