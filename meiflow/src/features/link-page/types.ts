@@ -5,7 +5,12 @@ export type { LinkPage, LinkPageLink }
 export interface LinkPageFormValues {
   username: string
   displayName: string
+  role: string
   bio: string
+  phone: string
+  email: string
+  city: string
+  website: string
   accentColor: string
   theme: 'dark' | 'light'
 }

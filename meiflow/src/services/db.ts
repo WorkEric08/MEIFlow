@@ -67,7 +67,12 @@ export interface LinkPageLink {
 export interface LinkPage extends BaseEntity {
   username: string
   displayName: string
+  role?: string
   bio?: string
+  phone?: string
+  email?: string
+  city?: string
+  website?: string
   avatarUrl?: string
   theme: 'dark' | 'light'
   accentColor: string
@@ -90,6 +95,12 @@ export class MeiFlowDB extends Dexie {
       projects: 'id, clientId, createdAt, updatedAt, status, startDate',
       payments: 'id, projectId, clientId, createdAt, status, dueDate',
       contracts: 'id, projectId, clientId, createdAt, status, slug',
+      linkPages: 'id, username, createdAt',
+    })
+
+    // v2 — campos extras do cartão de visitas (role/phone/email/city/website).
+    // Migration transparente: campos novos são opcionais, registros antigos seguem válidos.
+    this.version(2).stores({
       linkPages: 'id, username, createdAt',
     })
   }

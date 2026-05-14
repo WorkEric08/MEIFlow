@@ -31,14 +31,36 @@ export default function LinkPageEditor() {
   const { register, handleSubmit, watch, setValue, reset, formState: { errors, isDirty } } =
     useForm<LinkPageFormValues>({
       resolver: zodResolver(linkPageSchema),
-      defaultValues: { username: '', displayName: '', bio: '', accentColor: '#3B8CE8', theme: 'dark' },
+      defaultValues: {
+        username: '',
+        displayName: '',
+        role: '',
+        bio: '',
+        phone: '',
+        email: '',
+        city: '',
+        website: '',
+        accentColor: '#3B8CE8',
+        theme: 'dark',
+      },
     })
 
   const watchedValues = watch()
 
   useEffect(() => {
     if (page) {
-      reset({ username: page.username, displayName: page.displayName, bio: page.bio ?? '', accentColor: page.accentColor, theme: page.theme })
+      reset({
+        username: page.username,
+        displayName: page.displayName,
+        role: page.role ?? '',
+        bio: page.bio ?? '',
+        phone: page.phone ?? '',
+        email: page.email ?? '',
+        city: page.city ?? '',
+        website: page.website ?? '',
+        accentColor: page.accentColor,
+        theme: page.theme,
+      })
     }
   }, [page, reset])
 
@@ -79,9 +101,9 @@ export default function LinkPageEditor() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Link2 size={18} style={{ color: 'var(--primary)' }} aria-hidden />
-            <h1 className="text-h2 font-bold" style={{ color: 'var(--text-primary)' }}>Link Page</h1>
+            <h1 className="text-h2 font-bold" style={{ color: 'var(--text-primary)' }}>Cartão de Visitas</h1>
           </div>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Sua página pública de links e portfólio</p>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Seu cartão digital público de contato e links</p>
         </div>
         {page && (
           <a href={`/${page.username}`} target="_blank" rel="noopener noreferrer"
@@ -121,6 +143,42 @@ export default function LinkPageEditor() {
                     className="w-full px-3 py-2 rounded-input text-sm border outline-none resize-none transition-all duration-fast"
                     style={{ background: 'var(--bg-2)', color: 'var(--text-primary)', borderColor: errors.bio ? 'var(--status-overdue)' : 'var(--border)' }} />
                 </Field>
+
+                {/* ── Cargo + Cidade ── */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Cargo / Especialidade" error={errors.role?.message}>
+                    <input {...register('role')} placeholder="Desenvolvedor Web Freelancer"
+                      className="w-full px-3 py-2 rounded-input text-sm border outline-none transition-all duration-fast"
+                      style={{ background: 'var(--bg-2)', color: 'var(--text-primary)', borderColor: errors.role ? 'var(--status-overdue)' : 'var(--border)' }} />
+                  </Field>
+                  <Field label="Cidade" error={errors.city?.message}>
+                    <input {...register('city')} placeholder="Itajaí, SC"
+                      className="w-full px-3 py-2 rounded-input text-sm border outline-none transition-all duration-fast"
+                      style={{ background: 'var(--bg-2)', color: 'var(--text-primary)', borderColor: errors.city ? 'var(--status-overdue)' : 'var(--border)' }} />
+                  </Field>
+                </div>
+
+                {/* ── Telefone + E-mail ── */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Telefone" error={errors.phone?.message}>
+                    <input {...register('phone')} placeholder="(47) 99999-9999" inputMode="tel"
+                      className="w-full px-3 py-2 rounded-input text-sm border outline-none transition-all duration-fast"
+                      style={{ background: 'var(--bg-2)', color: 'var(--text-primary)', borderColor: errors.phone ? 'var(--status-overdue)' : 'var(--border)' }} />
+                  </Field>
+                  <Field label="E-mail de contato" error={errors.email?.message}>
+                    <input {...register('email')} placeholder="contato@exemplo.com" type="email" inputMode="email"
+                      className="w-full px-3 py-2 rounded-input text-sm border outline-none transition-all duration-fast"
+                      style={{ background: 'var(--bg-2)', color: 'var(--text-primary)', borderColor: errors.email ? 'var(--status-overdue)' : 'var(--border)' }} />
+                  </Field>
+                </div>
+
+                {/* ── Website (full width) ── */}
+                <Field label="Website" error={errors.website?.message}>
+                  <input {...register('website')} placeholder="https://meusite.com.br" type="url" inputMode="url"
+                    className="w-full px-3 py-2 rounded-input text-sm border outline-none transition-all duration-fast"
+                    style={{ background: 'var(--bg-2)', color: 'var(--text-primary)', borderColor: errors.website ? 'var(--status-overdue)' : 'var(--border)' }} />
+                </Field>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="Cor de destaque">
                     <AccentColorPicker value={watchedValues.accentColor} onChange={(c) => setValue('accentColor', c, { shouldDirty: true })} />
