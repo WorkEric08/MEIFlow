@@ -380,9 +380,17 @@ function AboutSection() {
   )
 }
 
+const DEV_NAME = 'devinfo'
+
+function isDevMode(name: string) {
+  return name.trim().toLowerCase() === DEV_NAME
+}
+
 // ─── Page ────────────────────────────────────────────────────────
 export default function SettingsPage() {
   const navigate = useNavigate()
+  const { profile } = useProfileStore()
+  const devMode = isDevMode(profile.name)
 
   useEffect(() => {
     if (window.location.hash === '#upgrade') {
@@ -401,11 +409,11 @@ export default function SettingsPage() {
       </div>
 
       <div className="flex flex-col gap-4">
-        <PlanSection />
+        {!devMode && <PlanSection />}
         <ProfileSection />
         <AppearanceSection />
-        <DataSection />
-        <AboutSection />
+        {devMode && <DataSection />}
+        {devMode && <AboutSection />}
       </div>
     </div>
   )
