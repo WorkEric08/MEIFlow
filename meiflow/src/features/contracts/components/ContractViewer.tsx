@@ -3,6 +3,7 @@ import { Printer, Send, X } from 'lucide-react'
 import { renderMarkdown } from '../markdown'
 import { Modal } from '@/components/shared'
 import { useSendContract } from '../index'
+import { usePlanStore } from '@/store/plan'
 import type { Contract } from '@/services/db'
 
 interface Props {
@@ -10,7 +11,7 @@ interface Props {
   onClose: () => void
 }
 
-const PRINT_STYLES = `
+const BASE_PRINT_STYLES = `
   @media print {
     body * { visibility: hidden !important; }
     #contract-print, #contract-print * { visibility: visible !important; }
@@ -34,17 +35,39 @@ const PRINT_STYLES = `
   }
 `
 
+const WATERMARK_PRINT_STYLES = `
+  @media print {
+    #contract-print::after {
+      content: "MEIFlow — Plano Gratuito";
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-45deg);
+      font-size: 52pt;
+      color: rgba(0, 0, 0, 0.07);
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 9999;
+      font-family: Georgia, serif;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+  }
+`
+
 export default function ContractViewer({ contract, onClose }: Props) {
   const sendContract = useSendContract()
+  const { plan } = usePlanStore()
   const styleRef = useRef<HTMLStyleElement | null>(null)
 
   function handlePrint() {
     if (!styleRef.current) {
       const style = document.createElement('style')
-      style.innerHTML = PRINT_STYLES
       document.head.appendChild(style)
       styleRef.current = style
     }
+    styleRef.current.innerHTML =
+      BASE_PRINT_STYLES + (plan === 'free' ? WATERMARK_PRINT_STYLES : '')
     window.print()
   }
 

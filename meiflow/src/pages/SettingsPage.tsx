@@ -1,7 +1,11 @@
-import { useState, useRef } from 'react'
-import { Settings, User, Palette, Database, Info, Sun, Moon, Download, Trash2, CheckCheck, Save } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Settings, User, Palette, Database, Info, Sun, Moon, Download, Trash2, CheckCheck, Save, Sparkles, Crown } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useThemeStore } from '@/store/theme'
 import { useProfileStore } from '@/store/profile'
+import { usePlanStore, FREE_LIMITS } from '@/store/plan'
+import { useClients } from '@/features/clients/hooks'
+import { useProjects } from '@/features/projects/hooks'
 import { db } from '@/services/db'
 import { inputCls, inputStyle, Field } from '@/components/shared'
 import { cn } from '@/lib/utils'
@@ -10,16 +14,19 @@ const APP_VERSION = '0.1.0'
 
 // ─── Section wrapper ────────────────────────────────────────────
 function Section({
+  id,
   icon,
   title,
   children,
 }: {
+  id?: string
   icon: React.ReactNode
   title: string
   children: React.ReactNode
 }) {
   return (
     <div
+      id={id}
       className="rounded-card border overflow-hidden"
       style={{ background: 'var(--bg-1)', borderColor: 'var(--border)' }}
     >
@@ -37,7 +44,7 @@ function Section({
   )
 }
 
-// ─── Row de ação (botão perigoso ou neutro) ──────────────────────
+// ─── Row de ação ─────────────────────────────────────────────────
 function ActionRow({
   label,
   description,
@@ -62,22 +69,121 @@ function ActionRow({
   )
 }
 
+// ─── Uso do plano ────────────────────────────────────────────────
+function UsageBar({ label, used, max }: { label: string; used: number; max: number }) {
+  const pct = Math.min(100, (used / max) * 100)
+  const atLimit = used >= max
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{label}</span>
+        <span className="text-xs font-mono font-medium" style={{ color: atLimit ? 'var(--status-overdue)' : 'var(--text-secondary)' }}>
+          {used}/{max}
+        </span>
+      </div>
+      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-2)' }}>
+        <div
+          className="h-full rounded-full transition-all"
+          style={{
+            width: `${pct}%`,
+            background: atLimit ? 'var(--status-overdue)' : 'var(--primary)',
+          }}
+        />
+      </div>
+    </div>
+  )
+}
+
+// ─── Plano ───────────────────────────────────────────────────────
+function PlanSection() {
+  const { plan, setPlan } = usePlanStore()
+  const { data: clients = [] } = useClients()
+  const { data: projects = [] } = useProjects()
+
+  const activeProjects = projects.filter((p) => p.status === 'active').length
+
+  if (plan === 'pro') {
+    return (
+      <Section id="upgrade" icon={<Crown size={16} />} title="Plano">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            <span
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-badge text-xs font-bold"
+              style={{ background: 'var(--primary-subtle)', color: 'var(--primary)' }}
+            >
+              <Crown size={11} /> Pro
+            </span>
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+              Limites ilimitados desbloqueados.
+            </p>
+          </div>
+          <button
+            onClick={() => setPlan('free')}
+            className="self-start text-xs transition-all hover:opacity-70"
+            style={{ color: 'var(--text-tertiary)' }}
+          >
+            Voltar ao plano gratuito (demo)
+          </button>
+        </div>
+      </Section>
+    )
+  }
+
+  return (
+    <Section id="upgrade" icon={<Sparkles size={16} />} title="Plano">
+      <div className="flex flex-col gap-5">
+        <div className="flex items-center gap-3">
+          <span
+            className="inline-flex items-center px-3 py-1 rounded-badge text-xs font-bold"
+            style={{ background: 'var(--bg-2)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+          >
+            Gratuito
+          </span>
+          <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+            Uso atual dos seus limites
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <UsageBar label="Clientes" used={clients.length} max={FREE_LIMITS.clients} />
+          <UsageBar label="Projetos ativos" used={activeProjects} max={FREE_LIMITS.activeProjects} />
+          <UsageBar label="Templates de contrato" used={FREE_LIMITS.contractTemplates} max={4} />
+        </div>
+
+        <div
+          className="p-4 rounded-card border flex flex-col gap-3"
+          style={{ background: 'var(--bg-2)', borderColor: 'var(--blueprint-border)' }}
+        >
+          <div>
+            <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+              MEIFlow Pro — R$ 29/mês
+            </p>
+            <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
+              Clientes ilimitados · 4 templates · Sem marca d'água
+            </p>
+          </div>
+          <button
+            onClick={() => setPlan('pro')}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-input text-sm font-semibold text-white transition-all hover:opacity-90"
+            style={{ background: 'var(--primary)' }}
+          >
+            <Sparkles size={14} />
+            Ativar Pro — R$ 29/mês
+          </button>
+          <p className="text-xs text-center" style={{ color: 'var(--text-tertiary)' }}>
+            Integração de pagamento em breve · ativação imediata para demonstração
+          </p>
+        </div>
+      </div>
+    </Section>
+  )
+}
+
 // ─── Perfil ─────────────────────────────────────────────────────
-function ProfileSection({ onDevMode }: { onDevMode: () => void }) {
+function ProfileSection() {
   const { profile, setProfile } = useProfileStore()
   const [form, setForm] = useState({ ...profile })
   const [saved, setSaved] = useState(false)
-  const devBuffer = useRef('')
-
-  function handleNameKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key.length !== 1) { devBuffer.current = ''; return }
-    const TARGET = 'devinfo'
-    devBuffer.current = (devBuffer.current + e.key).toLowerCase().slice(-TARGET.length)
-    if (devBuffer.current === TARGET) {
-      onDevMode()
-      devBuffer.current = ''
-    }
-  }
 
   function handleSave() {
     setProfile(form)
@@ -104,7 +210,6 @@ function ProfileSection({ onDevMode }: { onDevMode: () => void }) {
               placeholder="Seu nome"
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              onKeyDown={handleNameKeyDown}
             />
           </Field>
           <Field label="E-mail">
@@ -277,7 +382,16 @@ function AboutSection() {
 
 // ─── Page ────────────────────────────────────────────────────────
 export default function SettingsPage() {
-  const [devMode, setDevMode] = useState(false)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (window.location.hash === '#upgrade') {
+      const el = document.getElementById('upgrade')
+      el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      navigate('/settings', { replace: true })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div className="max-w-2xl mx-auto animate-fade-in">
@@ -287,10 +401,11 @@ export default function SettingsPage() {
       </div>
 
       <div className="flex flex-col gap-4">
-        <ProfileSection onDevMode={() => setDevMode(prev => !prev)} />
+        <PlanSection />
+        <ProfileSection />
         <AppearanceSection />
-        {devMode && <DataSection />}
-        {devMode && <AboutSection />}
+        <DataSection />
+        <AboutSection />
       </div>
     </div>
   )

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { FileText } from 'lucide-react'
+import { FileText, Lock } from 'lucide-react'
 import { Modal, Field, inputCls, inputStyle } from '@/components/shared'
 import CustomSelect from '@/components/CustomSelect'
 import { useUnsavedConfirm } from '@/hooks/useUnsavedConfirm'
@@ -12,6 +12,8 @@ import { contractSchema, useCreateContract, type ContractFormValues } from '../i
 import { useProfileStore } from '@/store/profile'
 import { CONTRACT_TEMPLATES, interpolate } from '../templates'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { usePlanGate } from '@/hooks/usePlanGate'
+import UpgradeModal from '@/components/UpgradeModal'
 import type { Client, Project } from '@/services/db'
 
 interface Props {
@@ -25,8 +27,10 @@ export default function ContractModal({ open, onClose, onCreated }: Props) {
   const { data: clients = [] } = useClients()
   const { data: projects = [] } = useProjects()
   const { profile } = useProfileStore()
+  const planGate = usePlanGate()
   const [_selectedTemplate, setSelectedTemplate] = useState('')
   const [step, setStep] = useState<'template' | 'form'>('template')
+  const [upgradeReason, setUpgradeReason] = useState('')
 
   const { register, handleSubmit, watch, setValue, reset, control, formState: { errors, isDirty } } =
     useForm<ContractFormValues>({
@@ -34,7 +38,6 @@ export default function ContractModal({ open, onClose, onCreated }: Props) {
       defaultValues: { projectId: '', clientId: '', title: '', content: '' },
     })
 
-  // No step 'template' não há dados para perder — confirmação só no step 'form'
   const { handleClose, dialog } = useUnsavedConfirm(step === 'form' && isDirty, onClose)
 
   const watchedClientId  = watch('clientId')
@@ -47,7 +50,6 @@ export default function ContractModal({ open, onClose, onCreated }: Props) {
       setSelectedTemplate('')
       reset()
     }
-    // reset é estável por referência no RHF — seguro omitir das deps
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
@@ -87,6 +89,11 @@ export default function ContractModal({ open, onClose, onCreated }: Props) {
   return (
     <>
       {dialog}
+      <UpgradeModal
+        open={!!upgradeReason}
+        onClose={() => setUpgradeReason('')}
+        reason={upgradeReason}
+      />
       <Modal open={open} onClose={handleClose} title="Novo contrato" size="lg">
       {step === 'template' ? (
         <div className="flex flex-col gap-4">
@@ -95,17 +102,47 @@ export default function ContractModal({ open, onClose, onCreated }: Props) {
           </p>
 
           <div className="grid grid-cols-2 gap-3">
-            {CONTRACT_TEMPLATES.map((t) => (
-              <button key={t.id} onClick={() => applyTemplate(t.id)}
-                className="flex flex-col items-start gap-1.5 p-4 rounded-card border text-left transition-all duration-fast hover:opacity-80"
-                style={{ background: 'var(--bg-2)', borderColor: 'var(--blueprint-border)' }}>
-                <div className="flex items-center gap-2">
-                  <FileText size={14} style={{ color: 'var(--primary)' }} />
-                  <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{t.name}</span>
-                </div>
-                <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{t.category}</span>
-              </button>
-            ))}
+            {CONTRACT_TEMPLATES.map((t, idx) => {
+              const gate = planGate.check('contract-template', idx)
+              const locked = !gate.allowed
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => {
+                    if (locked) { setUpgradeReason(gate.reason); return }
+                    applyTemplate(t.id)
+                  }}
+                  className="flex flex-col items-start gap-1.5 p-4 rounded-card border text-left transition-all duration-fast"
+                  style={{
+                    background: 'var(--bg-2)',
+                    borderColor: locked ? 'var(--border)' : 'var(--blueprint-border)',
+                    opacity: locked ? 0.65 : 1,
+                    cursor: locked ? 'default' : 'pointer',
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    {locked
+                      ? <Lock size={14} style={{ color: 'var(--text-tertiary)' }} />
+                      : <FileText size={14} style={{ color: 'var(--primary)' }} />
+                    }
+                    <span className="text-sm font-semibold" style={{ color: locked ? 'var(--text-tertiary)' : 'var(--text-primary)' }}>
+                      {t.name}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{t.category}</span>
+                    {locked && (
+                      <span
+                        className="text-xs font-semibold px-1.5 py-0.5 rounded-badge"
+                        style={{ background: 'var(--primary-subtle)', color: 'var(--primary)' }}
+                      >
+                        Pro
+                      </span>
+                    )}
+                  </div>
+                </button>
+              )
+            })}
           </div>
 
           <button onClick={() => setStep('form')}
@@ -148,7 +185,6 @@ export default function ContractModal({ open, onClose, onCreated }: Props) {
               className={inputCls(!!errors.title)} style={inputStyle(!!errors.title)} />
           </Field>
 
-          {/* Controller garante fonte única de verdade para o MarkdownEditor */}
           <Field label="Conteúdo *" error={errors.content?.message}>
             <Controller
               name="content"

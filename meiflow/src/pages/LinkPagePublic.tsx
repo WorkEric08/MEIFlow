@@ -2,9 +2,11 @@ import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { ExternalLink } from 'lucide-react'
 import { linkPageService } from '@/features/link-page/service'
+import { usePlanStore } from '@/store/plan'
 
 export default function LinkPagePublic() {
   const { username } = useParams<{ username: string }>()
+  const { plan } = usePlanStore()
 
   const { data: page, isLoading } = useQuery({
     queryKey: ['link-page-public', username],
@@ -72,12 +74,14 @@ export default function LinkPagePublic() {
           ))}
         </div>
 
-        {/* Footer */}
-        <div className="text-center mt-10">
-          <a href="/" className="text-xs font-medium transition-all hover:opacity-80"
-            style={{ color: muted }}>
-            Criado com <span style={{ color: page.accentColor }}>MEIFlow</span>
-          </a>
+        {/* Footer — watermark on free plan, clean on pro */}
+        <div className="text-center mt-10 h-5">
+          {plan === 'free' && (
+            <a href="/" className="text-xs font-medium transition-all hover:opacity-80"
+              style={{ color: muted }}>
+              Criado com <span style={{ color: page.accentColor }}>MEIFlow</span> ✦
+            </a>
+          )}
         </div>
       </div>
     </div>
