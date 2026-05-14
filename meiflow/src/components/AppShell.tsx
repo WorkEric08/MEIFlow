@@ -88,37 +88,47 @@ export default function AppShell() {
       {/* ── Main ── */}
       <div className="flex-1 flex flex-col min-w-0">
 
-        {/* Mobile header */}
-        <header className="lg:hidden flex items-center justify-between px-4 py-3 border-b"
-          style={{ background: 'var(--bg-1)', borderColor: 'var(--border)' }}>
+        {/* Mobile header — sticky para sumir com scroll-up só visualmente */}
+        <header
+          className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 border-b backdrop-blur"
+          style={{
+            background: 'color-mix(in srgb, var(--bg-1) 92%, transparent)',
+            borderColor: 'var(--border)',
+            paddingTop: 'max(0.75rem, env(safe-area-inset-top))',
+          }}
+        >
           <span className="text-lg font-extrabold tracking-tight" style={{ color: 'var(--text-primary)' }}>
             MEI<span style={{ color: 'var(--primary)' }}>Flow</span>
           </span>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-0.5">
             <PWAInstallButton />
             <NotificationBell />
             <button onClick={handleToggleTheme} aria-label="Alternar tema"
-              className="p-2 rounded-input"
+              data-pwa-tap
+              className="p-2.5 rounded-input min-h-[40px] min-w-[40px] flex items-center justify-center transition-all hover:opacity-70"
               style={{ color: 'var(--text-secondary)' }}>
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
           </div>
         </header>
 
-        {/* Page content — pb-24 em mobile/tablet garante conteúdo acima do bottom nav */}
-        <main className="flex-1 overflow-auto p-4 md:p-5 lg:p-6 pb-24 md:pb-24 lg:pb-6">
+        {/* Page content — padding-bottom acomoda bottom nav + safe-area-inset-bottom */}
+        <main
+          className="flex-1 overflow-auto p-4 md:p-5 lg:p-6 lg:pb-6"
+          style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 96px)' }}
+        >
           <Outlet />
         </main>
 
         {/* ── Bottom nav (mobile e tablet até lg) ──
-            Fix 2: padding-bottom = safe-area-inset-bottom para home indicator
-            Fix 6: sem labels em xs (320px), visível em sm+ (375px) ── */}
+            Safe-area bottom para home indicator. Glassmorphism sutil em mobile. ── */}
         <nav
-          className="lg:hidden fixed bottom-0 left-0 right-0 border-t flex items-center"
+          className="lg:hidden fixed bottom-0 left-0 right-0 border-t flex items-stretch backdrop-blur"
           style={{
-            background: 'var(--bg-1)',
+            background: 'color-mix(in srgb, var(--bg-1) 92%, transparent)',
             borderColor: 'var(--border)',
             paddingBottom: 'env(safe-area-inset-bottom)',
+            zIndex: 40,
           }}
         >
           {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
@@ -126,17 +136,27 @@ export default function AppShell() {
               onClick={() => triggerHaptic('selection')}
               data-pwa-tap
               className={({ isActive }) => cn(
-                'flex-1 flex flex-col items-center gap-0.5 pt-2.5 pb-2 min-h-[44px] justify-center',
-                'text-[10px] font-medium transition-all duration-fast',
-                isActive ? '' : 'opacity-50'
+                'flex-1 flex flex-col items-center gap-1 pt-2 pb-1.5 min-h-[56px] justify-center relative',
+                'text-[10px] font-semibold transition-all duration-fast',
+                isActive ? '' : 'opacity-60'
               )}
               style={({ isActive }) => ({
                 color: isActive ? 'var(--primary)' : 'var(--text-secondary)',
               })}
             >
-              <Icon size={20} aria-hidden />
-              {/* Fix 6 — label oculta em 320px, visível em 375px+ */}
-              <span className="hidden xs:block">{label}</span>
+              {({ isActive }) => (
+                <>
+                  {/* indicador ativo no topo — pill curto, Material-style */}
+                  {isActive && (
+                    <span
+                      className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-b-full"
+                      style={{ background: 'var(--primary)' }}
+                    />
+                  )}
+                  <Icon size={20} aria-hidden strokeWidth={isActive ? 2.4 : 2} />
+                  <span className="hidden xs:block leading-none">{label}</span>
+                </>
+              )}
             </NavLink>
           ))}
         </nav>

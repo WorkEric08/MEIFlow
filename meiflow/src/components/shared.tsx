@@ -34,24 +34,40 @@ export function Modal({ open, onClose, title, children, size = 'md', className }
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.6)' }}
+      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center sm:p-4"
+      style={{ background: 'rgba(0,0,0,0.6)', paddingTop: 'env(safe-area-inset-top)' }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className={cn('w-full rounded-modal border animate-slide-up sm:animate-fade-in', widths[size], className)}
+        className={cn(
+          // Mobile: bottom-sheet fullwidth com cantos arredondados em cima apenas
+          'w-full max-h-[92dvh] flex flex-col overflow-hidden border',
+          'rounded-t-modal sm:rounded-modal',
+          'animate-slide-up sm:animate-fade-in',
+          widths[size],
+          className,
+        )}
         style={{ background: 'var(--bg-1)', borderColor: 'var(--border)' }}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b"
+        {/* Drag handle visual — sinaliza bottom-sheet em mobile */}
+        <div className="sm:hidden flex justify-center pt-2 pb-1">
+          <span className="block w-10 h-1 rounded-full" style={{ background: 'var(--border)' }} />
+        </div>
+        <div className="flex items-center justify-between px-5 py-3 sm:py-4 border-b shrink-0"
           style={{ borderColor: 'var(--border)' }}>
-          <h2 className="font-semibold text-base" style={{ color: 'var(--text-primary)' }}>{title}</h2>
+          <h2 className="font-semibold text-base sm:text-base" style={{ color: 'var(--text-primary)' }}>{title}</h2>
           <button onClick={onClose} aria-label="Fechar"
-            className="p-1.5 rounded-input transition-all hover:opacity-70"
+            className="p-2 -mr-1 rounded-input transition-all hover:opacity-70 min-h-[40px] min-w-[40px] flex items-center justify-center"
             style={{ color: 'var(--text-tertiary)' }}>
-            <X size={16} />
+            <X size={18} />
           </button>
         </div>
-        <div className="px-5 py-4">{children}</div>
+        <div
+          className="px-5 py-4 overflow-y-auto"
+          style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+        >
+          {children}
+        </div>
       </div>
     </div>,
     document.body
@@ -68,14 +84,15 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-      <div className="w-12 h-12 rounded-full flex items-center justify-center"
+    <div className="flex flex-col items-center justify-center py-12 sm:py-16 px-6 gap-4 text-center rounded-card border"
+      style={{ background: 'var(--bg-1)', borderColor: 'var(--border)' }}>
+      <div className="w-14 h-14 rounded-full flex items-center justify-center"
         style={{ background: 'var(--bg-2)', color: 'var(--text-tertiary)' }}>
         {icon}
       </div>
-      <div>
-        <p className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{title}</p>
-        <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>{description}</p>
+      <div className="max-w-xs">
+        <p className="font-semibold text-base" style={{ color: 'var(--text-primary)' }}>{title}</p>
+        <p className="text-sm mt-1.5 leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>{description}</p>
       </div>
       {action}
     </div>
@@ -120,18 +137,19 @@ interface MetricCardProps {
 
 export function MetricCard({ label, value, sub, accent, blueprint = false }: MetricCardProps) {
   return (
-    <div className={cn('relative p-4 rounded-card border overflow-hidden', blueprint && 'blueprint-corner')}
+    <div className={cn('relative p-3.5 sm:p-4 rounded-card border overflow-hidden', blueprint && 'blueprint-corner')}
       style={{ background: 'var(--bg-1)', borderColor: blueprint ? 'var(--blueprint-border)' : 'var(--border)' }}>
       {blueprint && <div className="blueprint-grid absolute inset-0 pointer-events-none" />}
       <div className="relative">
-        <p className="text-xs font-semibold uppercase tracking-widest"
+        <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-widest leading-tight"
           style={{ color: accent ?? 'var(--blueprint-text)' }}>
           {label}
         </p>
-        <p className="text-2xl font-bold mt-1 font-mono" style={{ color: 'var(--text-primary)' }}>
+        <p className="text-xl sm:text-2xl font-bold mt-1.5 font-mono leading-tight break-all"
+          style={{ color: 'var(--text-primary)' }}>
           {value}
         </p>
-        {sub && <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>{sub}</p>}
+        {sub && <p className="text-[11px] sm:text-xs mt-1 leading-snug" style={{ color: 'var(--text-tertiary)' }}>{sub}</p>}
       </div>
     </div>
   )
