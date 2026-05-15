@@ -193,7 +193,11 @@ input[type="number"] {
 
 /* Scrollbar transparente no PWA mobile */
 html.pwa-mobile * {
+  scrollbar-width: none;
   scrollbar-color: transparent transparent;
+}
+html.pwa-mobile ::-webkit-scrollbar {
+  display: none;
 }
 html.pwa-mobile ::-webkit-scrollbar-thumb {
   background: transparent;
