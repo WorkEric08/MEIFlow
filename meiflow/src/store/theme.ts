@@ -34,9 +34,14 @@ export const useThemeStore = create<ThemeStore>()(
 
 function applyTheme(theme: Theme) {
   const root = document.documentElement
-  if (theme === 'dark') {
-    root.classList.add('dark')
-  } else {
-    root.classList.remove('dark')
-  }
+  const isDark = theme === 'dark'
+
+  root.classList.toggle('dark', isDark)
+  root.style.colorScheme = isDark ? 'dark' : 'light'
+
+  const colorSchemeMeta = document.getElementById('color-scheme-meta')
+  if (colorSchemeMeta) colorSchemeMeta.setAttribute('content', isDark ? 'dark' : 'light')
+
+  const themeColorMeta = document.getElementById('theme-color-meta')
+  if (themeColorMeta) themeColorMeta.setAttribute('content', isDark ? '#0D1117' : '#F4F6FA')
 }
