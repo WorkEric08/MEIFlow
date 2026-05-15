@@ -1,9 +1,15 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAndroidBack } from '@/hooks/useAndroidBack'
 import { useScrollLock } from '@/hooks/useScrollLock'
+
+// Curva padrão de bottom-sheets do iOS / Material 3 (decel suave, sem bounce)
+const SHEET_EASING = 'cubic-bezier(0.32, 0.72, 0, 1)'
+const SHEET_DURATION_MS = 280
+const DISMISS_DISTANCE_RATIO = 0.3   // arrastou >30% da altura → fecha
+const DISMISS_VELOCITY_PX_MS = 0.6   // ou flick > 0.6px/ms → fecha
 
 // ─── Modal ──────────────────────────────────────────────────────
 interface ModalProps {
@@ -33,17 +39,90 @@ export function Modal({ open, onClose, title, children, size = 'md', className }
     return () => window.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
+  const sheetRef = useRef<HTMLDivElement>(null)
+  const backdropRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const drag = useRef({ active: false, startY: 0, dy: 0, startTime: 0, pointerId: -1 })
+
+  function isMobileLayout() {
+    return typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches
+  }
+
+  function beginDrag(e: React.PointerEvent<HTMLElement>, fromBody = false) {
+    if (!isMobileLayout()) return
+    if (e.pointerType === 'mouse' && e.button !== 0) return
+    if (fromBody && (scrollRef.current?.scrollTop ?? 0) > 0) return
+
+    drag.current = {
+      active: true,
+      startY: e.clientY,
+      dy: 0,
+      startTime: performance.now(),
+      pointerId: e.pointerId,
+    }
+    e.currentTarget.setPointerCapture(e.pointerId)
+
+    if (sheetRef.current) sheetRef.current.style.transition = 'none'
+    if (backdropRef.current) backdropRef.current.style.transition = 'none'
+  }
+
+  function moveDrag(e: React.PointerEvent<HTMLElement>) {
+    if (!drag.current.active || e.pointerId !== drag.current.pointerId) return
+    const dy = e.clientY - drag.current.startY
+    // Resistência elástica ao tentar arrastar para cima
+    const adjusted = dy < 0 ? -Math.pow(-dy, 0.6) : dy
+    drag.current.dy = adjusted
+
+    const sheet = sheetRef.current
+    const backdrop = backdropRef.current
+    if (sheet) sheet.style.transform = `translateY(${adjusted}px)`
+    if (backdrop) {
+      const h = sheet?.getBoundingClientRect().height ?? 1
+      const progress = Math.min(1, Math.max(0, adjusted / h))
+      backdrop.style.background = `rgba(0,0,0,${0.6 * (1 - progress)})`
+    }
+  }
+
+  function endDrag(e: React.PointerEvent<HTMLElement>) {
+    if (!drag.current.active || e.pointerId !== drag.current.pointerId) return
+    const { dy, startTime } = drag.current
+    drag.current.active = false
+    try { e.currentTarget.releasePointerCapture(e.pointerId) } catch {}
+
+    const sheet = sheetRef.current
+    const backdrop = backdropRef.current
+    if (!sheet) return
+
+    const elapsed = Math.max(1, performance.now() - startTime)
+    const velocity = dy / elapsed
+    const height = sheet.getBoundingClientRect().height
+    const shouldDismiss = dy > height * DISMISS_DISTANCE_RATIO || velocity > DISMISS_VELOCITY_PX_MS
+
+    sheet.style.transition = `transform ${SHEET_DURATION_MS}ms ${SHEET_EASING}`
+    if (backdrop) backdrop.style.transition = `background ${SHEET_DURATION_MS}ms ${SHEET_EASING}`
+
+    if (shouldDismiss) {
+      sheet.style.transform = `translateY(100%)`
+      if (backdrop) backdrop.style.background = 'rgba(0,0,0,0)'
+      const finish = () => { sheet.removeEventListener('transitionend', finish); onClose() }
+      sheet.addEventListener('transitionend', finish)
+    } else {
+      sheet.style.transform = ''
+      if (backdrop) backdrop.style.background = ''
+    }
+  }
+
   if (!open) return null
 
   const widths = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl' }
 
   return createPortal(
     <div
+      ref={backdropRef}
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center sm:p-4 modal-overscroll"
       style={{ background: 'rgba(0,0,0,0.6)', paddingTop: 'env(safe-area-inset-top)' }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
       onWheel={(e) => {
-        // Garante que wheel sobre o backdrop não rola o fundo
         if (e.target === e.currentTarget) e.preventDefault()
       }}
       onTouchMove={(e) => {
@@ -51,22 +130,39 @@ export function Modal({ open, onClose, title, children, size = 'md', className }
       }}
     >
       <div
+        ref={sheetRef}
         className={cn(
-          // Mobile: bottom-sheet fullwidth com cantos arredondados em cima apenas
           'w-full max-h-[92dvh] flex flex-col overflow-hidden border',
           'rounded-t-modal sm:rounded-modal',
           'animate-slide-up sm:animate-fade-in',
           widths[size],
           className,
         )}
-        style={{ background: 'var(--bg-1)', borderColor: 'var(--border)' }}
+        style={{ background: 'var(--bg-1)', borderColor: 'var(--border)', willChange: 'transform' }}
       >
-        {/* Drag handle visual — sinaliza bottom-sheet em mobile */}
-        <div className="sm:hidden flex justify-center pt-2 pb-1">
+        {/* Drag handle — área de toque ampliada, arrasta o sheet */}
+        <div
+          className="sm:hidden flex justify-center pt-2 pb-1 cursor-grab active:cursor-grabbing"
+          style={{ touchAction: 'none' }}
+          onPointerDown={(e) => beginDrag(e)}
+          onPointerMove={moveDrag}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+        >
           <span className="block w-10 h-1 rounded-full" style={{ background: 'var(--border)' }} />
         </div>
-        <div className="flex items-center justify-between px-5 py-3 sm:py-4 border-b shrink-0"
-          style={{ borderColor: 'var(--border)' }}>
+        <div
+          className="flex items-center justify-between px-5 py-3 sm:py-4 border-b shrink-0 sm:cursor-default"
+          style={{ borderColor: 'var(--border)', touchAction: 'pan-y' }}
+          onPointerDown={(e) => {
+            // Não inicia drag a partir do botão Fechar
+            if ((e.target as HTMLElement).closest('button')) return
+            beginDrag(e)
+          }}
+          onPointerMove={moveDrag}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+        >
           <h2 className="font-semibold text-base sm:text-base" style={{ color: 'var(--text-primary)' }}>{title}</h2>
           <button onClick={onClose} aria-label="Fechar"
             className="p-2 -mr-1 rounded-input transition-all hover:opacity-70 min-h-[40px] min-w-[40px] flex items-center justify-center"
@@ -75,11 +171,16 @@ export function Modal({ open, onClose, title, children, size = 'md', className }
           </button>
         </div>
         <div
+          ref={scrollRef}
           className="px-5 py-4 overflow-y-auto modal-scroll"
           style={{
             paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
             overscrollBehavior: 'contain',
           }}
+          onPointerDown={(e) => beginDrag(e, true)}
+          onPointerMove={moveDrag}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
         >
           {children}
         </div>
