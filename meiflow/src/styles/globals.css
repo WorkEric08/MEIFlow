@@ -191,6 +191,17 @@ input[type="number"] {
   to   { opacity: 1; transform: translateX(0); }
 }
 
+/* Scrollbar transparente no PWA mobile */
+html.pwa-mobile * {
+  scrollbar-color: transparent transparent;
+}
+html.pwa-mobile ::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+html.pwa-mobile ::-webkit-scrollbar-thumb:hover {
+  background: transparent;
+}
+
 html.pwa-mobile,
 html.pwa-mobile body {
   /* Bloqueia "puxar pra atualizar" e bounce do scroll */
