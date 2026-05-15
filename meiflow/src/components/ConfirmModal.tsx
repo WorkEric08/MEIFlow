@@ -1,3 +1,5 @@
+import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { AlertTriangle } from 'lucide-react'
 
 interface Props {
@@ -19,16 +21,34 @@ export function ConfirmModal({
   onConfirm,
   onCancel,
 }: Props) {
+  // Escape fecha como "cancelar"
+  useEffect(() => {
+    if (!open) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        e.stopPropagation()
+        onCancel()
+      }
+    }
+    // capture: roda antes do listener do Modal pai, evitando que ele consuma o Esc
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  }, [open, onCancel])
+
   if (!open) return null
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 flex items-center justify-center p-4"
       style={{
-        zIndex: 300,
+        // Acima do Modal pai (z-[9999]) para não ficar bloqueado pelo backdrop dele.
+        zIndex: 10000,
         background: 'rgba(0,0,0,0.5)',
         backdropFilter: 'blur(6px)',
         WebkitBackdropFilter: 'blur(6px)',
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onCancel()
       }}
     >
       <div
@@ -54,10 +74,9 @@ export function ConfirmModal({
         </div>
 
         {/* Ações */}
-        <div
-          className="flex gap-2 px-5 pb-5"
-        >
+        <div className="flex gap-2 px-5 pb-5">
           <button
+            type="button"
             onClick={onCancel}
             className="flex-1 px-4 py-2.5 rounded-input text-sm font-medium border transition-all hover:opacity-80"
             style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
@@ -65,6 +84,7 @@ export function ConfirmModal({
             {cancelLabel}
           </button>
           <button
+            type="button"
             onClick={onConfirm}
             className="flex-1 px-4 py-2.5 rounded-input text-sm font-semibold text-white transition-all hover:opacity-90"
             style={{ background: 'var(--status-overdue)' }}
@@ -73,6 +93,7 @@ export function ConfirmModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
