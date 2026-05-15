@@ -2,7 +2,6 @@ import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { ExternalLink, MapPin, Phone, Mail, Globe } from 'lucide-react'
 import { linkPageService } from '@/features/link-page/service'
-import { usePlanStore } from '@/store/plan'
 
 // ── Tokens de tema do cartão público (espelham globals.css, escopados ao cartão) ──
 const TOKENS = {
@@ -64,7 +63,6 @@ function buildContactItems(page: {
 
 export default function LinkPagePublic() {
   const { username } = useParams<{ username: string }>()
-  const { plan } = usePlanStore()
 
   const { data: page, isLoading } = useQuery({
     queryKey: ['link-page-public', username],
@@ -287,15 +285,6 @@ export default function LinkPagePublic() {
             >
               meiflow.com/{page.username}
             </span>
-            {plan === 'free' && (
-              <a
-                href="/"
-                className="font-mono text-[10px] uppercase tracking-widest transition-opacity hover:opacity-100"
-                style={{ color: t.textTertiary, opacity: 0.7 }}
-              >
-                MEI<span style={{ color: accent }}>Flow</span>
-              </a>
-            )}
           </div>
         </div>
       </article>

@@ -14,7 +14,11 @@
       "Bash(node -e \"const z = require\\('zustand/middleware'\\); console.log\\(typeof z.createJSONStorage\\)\")",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\('version','?'\\)\\)\")",
       "Bash(findstr -i \"shell\\\\|layout\\\\|header\")",
-      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Pichau\\\\Desktop\\\\meiflow-setup\\\\meiflow\\\\src\" -Recurse -Directory)"
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Pichau\\\\Desktop\\\\meiflow-setup\\\\meiflow\\\\src\" -Recurse -Directory)",
+      "Bash(Remove-Item \"C:\\\\Users\\\\Pichau\\\\Desktop\\\\meiflow-setup\\\\meiflow\\\\src\\\\store\\\\plan.ts\" -Force)",
+      "Bash(Remove-Item \"C:\\\\Users\\\\Pichau\\\\Desktop\\\\meiflow-setup\\\\meiflow\\\\src\\\\components\\\\UpgradeModal.tsx\" -Force)",
+      "Bash(Remove-Item \"C:\\\\Users\\\\Pichau\\\\Desktop\\\\meiflow-setup\\\\meiflow\\\\src\\\\hooks\\\\usePlanGate.ts\" -Force)",
+      "Bash(Write-Output \"deleted\")"
     ]
   }
 }

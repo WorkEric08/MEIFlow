@@ -4,8 +4,6 @@ import { useProjects, useDeleteProject } from '@/features/projects/hooks'
 import { useClients } from '@/features/clients/hooks'
 import ProjectModal from '@/features/projects/components/ProjectModal'
 import { EmptyState, StatusBadge } from '@/components/shared'
-import UpgradeModal from '@/components/UpgradeModal'
-import { usePlanGate } from '@/hooks/usePlanGate'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { Project } from '@/services/db'
 
@@ -19,19 +17,15 @@ export default function ProjectsPage() {
   const { data: projects = [], isLoading } = useProjects()
   const { data: clients = [] } = useClients()
   const deleteProject = useDeleteProject()
-  const planGate = usePlanGate()
   const [filter, setFilter] = useState<FilterStatus>('all')
   const [modal, setModal] = useState(false)
   const [editing, setEditing] = useState<Project | null>(null)
-  const [upgradeReason, setUpgradeReason] = useState('')
 
   const filtered = filter === 'all' ? projects : projects.filter((p) => p.status === filter)
 
   function handleEdit(p: Project) { setEditing(p); setModal(true) }
 
   function handleNew() {
-    const gate = planGate.check('project')
-    if (!gate.allowed) { setUpgradeReason(gate.reason); return }
     setEditing(null)
     setModal(true)
   }
@@ -165,7 +159,6 @@ export default function ProjectsPage() {
         </div>
       )}
 
-      <UpgradeModal open={!!upgradeReason} onClose={() => setUpgradeReason('')} reason={upgradeReason} />
       <ProjectModal open={modal} onClose={() => setModal(false)} editing={editing} />
     </div>
   )

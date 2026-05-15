@@ -6,18 +6,14 @@ import ClientDetail from '@/features/clients/components/ClientDetail'
 import ProjectModal from '@/features/projects/components/ProjectModal'
 import PaymentModal from '@/features/payments/components/PaymentModal'
 import { EmptyState } from '@/components/shared'
-import UpgradeModal from '@/components/UpgradeModal'
-import { usePlanGate } from '@/hooks/usePlanGate'
 import type { Client } from '@/services/db'
 
 export default function ClientsPage() {
   const { data: clients = [], isLoading } = useClients()
   const deleteClient = useDeleteClient()
-  const planGate = usePlanGate()
   const [search, setSearch] = useState('')
   const [modal, setModal] = useState(false)
   const [editing, setEditing] = useState<Client | null>(null)
-  const [upgradeReason, setUpgradeReason] = useState('')
 
   const filtered = clients.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -30,8 +26,6 @@ export default function ClientsPage() {
   const [paymentModal, setPaymentModal] = useState(false)
 
   function handleNew() {
-    const gate = planGate.check('client')
-    if (!gate.allowed) { setUpgradeReason(gate.reason); return }
     setEditing(null)
     setModal(true)
   }
@@ -148,7 +142,6 @@ export default function ClientsPage() {
         </div>
       )}
 
-      <UpgradeModal open={!!upgradeReason} onClose={() => setUpgradeReason('')} reason={upgradeReason} />
       <ClientModal open={modal} onClose={() => setModal(false)} editing={editing} />
       <ProjectModal open={projectModal} onClose={() => setProjectModal(false)} defaultClientId={detail?.id} />
       <PaymentModal open={paymentModal} onClose={() => setPaymentModal(false)} />
