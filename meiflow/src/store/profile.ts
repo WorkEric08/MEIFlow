@@ -5,6 +5,7 @@ export interface Profile {
   name: string
   email: string
   company: string
+  photo?: string
 }
 
 interface ProfileStore {

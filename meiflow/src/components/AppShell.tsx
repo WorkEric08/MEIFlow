@@ -1,4 +1,4 @@
-import { Outlet, NavLink } from 'react-router-dom'
+import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
   Users,
@@ -25,6 +25,9 @@ const NAV_ITEMS = [
 ]
 
 export default function AppShell() {
+  const location = useLocation()
+  const isHome = location.pathname === '/'
+
   return (
     <div className="flex min-h-dvh" style={{ background: 'var(--bg-0)' }}>
       <PWANativeShell />
@@ -78,40 +81,42 @@ export default function AppShell() {
       {/* ── Main ── */}
       <div className="flex-1 flex flex-col min-w-0">
 
-        {/* Mobile header — apenas marca + notificações + configurações */}
-        <header
-          className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 border-b backdrop-blur"
-          style={{
-            background: 'color-mix(in srgb, var(--bg-1) 92%, transparent)',
-            borderColor: 'var(--border)',
-            paddingTop: 'max(0.75rem, env(safe-area-inset-top))',
-          }}
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-lg font-extrabold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-              MEI<span style={{ color: 'var(--primary)' }}>Flow</span>
-            </span>
-            <OfflineIndicator />
-          </div>
-          <div className="flex items-center gap-0.5">
-            <NotificationBell />
-            <NavLink
-              to="/settings"
-              aria-label="Configurações"
-              data-pwa-tap
-              onClick={() => triggerHaptic('selection')}
-              className={({ isActive }) => cn(
-                'p-2.5 rounded-input min-h-[40px] min-w-[40px] flex items-center justify-center transition-all hover:opacity-70',
-                isActive && 'bg-[var(--primary-subtle)]',
-              )}
-              style={({ isActive }) => ({
-                color: isActive ? 'var(--primary)' : 'var(--text-secondary)',
-              })}
-            >
-              <Settings size={18} />
-            </NavLink>
-          </div>
-        </header>
+        {/* Mobile header — visível apenas no dashboard */}
+        {isHome && (
+          <header
+            className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 border-b backdrop-blur"
+            style={{
+              background: 'color-mix(in srgb, var(--bg-1) 92%, transparent)',
+              borderColor: 'var(--border)',
+              paddingTop: 'max(0.75rem, env(safe-area-inset-top))',
+            }}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-lg font-extrabold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                MEI<span style={{ color: 'var(--primary)' }}>Flow</span>
+              </span>
+              <OfflineIndicator />
+            </div>
+            <div className="flex items-center gap-0.5">
+              <NotificationBell />
+              <NavLink
+                to="/settings"
+                aria-label="Configurações"
+                data-pwa-tap
+                onClick={() => triggerHaptic('selection')}
+                className={({ isActive }) => cn(
+                  'p-2.5 rounded-input min-h-[40px] min-w-[40px] flex items-center justify-center transition-all hover:opacity-70',
+                  isActive && 'bg-[var(--primary-subtle)]',
+                )}
+                style={({ isActive }) => ({
+                  color: isActive ? 'var(--primary)' : 'var(--text-secondary)',
+                })}
+              >
+                <Settings size={18} />
+              </NavLink>
+            </div>
+          </header>
+        )}
 
         {/* Page content — padding-bottom acomoda bottom nav + safe-area-inset-bottom */}
         <main

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Settings, User, Palette, Database, Info, Sun, Moon, Download, Trash2, CheckCheck, Save, Sparkles, Crown, RefreshCw } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Settings, User, Palette, Info, Sun, Moon, CheckCheck, Save, Sparkles, Crown, RefreshCw, Camera } from 'lucide-react'
 
 declare const __COMMIT_HASH__: string
 declare const __COMMIT_DATE__: string
@@ -9,7 +9,6 @@ import { useProfileStore } from '@/store/profile'
 import { usePlanStore, FREE_LIMITS } from '@/store/plan'
 import { useClients } from '@/features/clients/hooks'
 import { useProjects } from '@/features/projects/hooks'
-import { db } from '@/services/db'
 import { inputCls, inputStyle, Field } from '@/components/shared'
 import { cn } from '@/lib/utils'
 
@@ -186,6 +185,7 @@ function ProfileSection() {
   const { profile, setProfile } = useProfileStore()
   const [form, setForm] = useState({ ...profile })
   const [saved, setSaved] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   function handleSave() {
     setProfile(form)
@@ -193,15 +193,56 @@ function ProfileSection() {
     setTimeout(() => setSaved(false), 2000)
   }
 
+  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const photo = ev.target?.result as string
+      setForm((f) => ({ ...f, photo }))
+    }
+    reader.readAsDataURL(file)
+  }
+
   const isDirty =
     form.name !== profile.name ||
     form.email !== profile.email ||
-    form.company !== profile.company
+    form.company !== profile.company ||
+    form.photo !== profile.photo
 
   return (
-    <Section icon={<User size={16} />} title="Perfil do contratante">
+    <Section icon={<User size={16} />} title="Perfil">
       <div className="flex flex-col gap-4">
-        <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+        {/* Foto de perfil */}
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            className="relative group w-20 h-20 rounded-full overflow-hidden border-2 transition-all hover:opacity-90"
+            style={{ borderColor: 'var(--border)' }}
+            aria-label="Alterar foto de perfil"
+          >
+            {form.photo ? (
+              <img src={form.photo} alt="Foto de perfil" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center" style={{ background: 'var(--bg-2)' }}>
+                <User size={32} style={{ color: 'var(--text-tertiary)' }} />
+              </div>
+            )}
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Camera size={18} className="text-white" />
+            </div>
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handlePhotoChange}
+          />
+        </div>
+
+        <p className="text-xs text-center" style={{ color: 'var(--text-tertiary)' }}>
           Esses dados preenchem automaticamente os contratos gerados pelo MEIFlow.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -291,76 +332,6 @@ function AppearanceSection() {
   )
 }
 
-// ─── Dados ──────────────────────────────────────────────────────
-function DataSection() {
-  const [clearing, setClearing] = useState(false)
-
-  async function handleExport() {
-    const [clients, projects, payments, contracts] = await Promise.all([
-      db.clients.toArray(),
-      db.projects.toArray(),
-      db.payments.toArray(),
-      db.contracts.toArray(),
-    ])
-    const data = { exportedAt: new Date().toISOString(), clients, projects, payments, contracts }
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `meiflow-backup-${new Date().toISOString().slice(0, 10)}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
-  async function handleClearAll() {
-    if (!confirm('Tem certeza? Todos os clientes, projetos, pagamentos e contratos serão removidos permanentemente.')) return
-    setClearing(true)
-    await Promise.all([
-      db.clients.clear(),
-      db.projects.clear(),
-      db.payments.clear(),
-      db.contracts.clear(),
-    ])
-    setClearing(false)
-  }
-
-  return (
-    <Section icon={<Database size={16} />} title="Dados">
-      <div className="flex flex-col gap-4">
-        <ActionRow
-          label="Exportar backup"
-          description="Baixa um arquivo JSON com todos os seus dados."
-          action={
-            <button
-              onClick={handleExport}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-input border text-xs font-medium transition-all hover:opacity-80"
-              style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
-            >
-              <Download size={12} />
-              Exportar
-            </button>
-          }
-        />
-        <div className="border-t" style={{ borderColor: 'var(--border)' }} />
-        <ActionRow
-          label="Limpar todos os dados"
-          description="Remove permanentemente clientes, projetos, pagamentos e contratos."
-          action={
-            <button
-              onClick={handleClearAll}
-              disabled={clearing}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-input text-xs font-medium transition-all hover:opacity-80 disabled:opacity-50"
-              style={{ background: 'var(--status-overdue-bg)', color: 'var(--status-overdue)' }}
-            >
-              <Trash2 size={12} />
-              {clearing ? 'Limpando…' : 'Limpar tudo'}
-            </button>
-          }
-        />
-      </div>
-    </Section>
-  )
-}
 
 // ─── Sobre ──────────────────────────────────────────────────────
 function AboutSection() {
@@ -463,7 +434,6 @@ export default function SettingsPage() {
         {!devMode && <PlanSection />}
         <ProfileSection />
         <AppearanceSection />
-        {devMode && <DataSection />}
         {devMode && <AboutSection />}
       </div>
     </div>
