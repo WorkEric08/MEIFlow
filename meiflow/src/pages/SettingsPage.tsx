@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Settings, User, Palette, Database, Info, Sun, Moon, Download, Trash2, CheckCheck, Save, Sparkles, Crown } from 'lucide-react'
+import { Settings, User, Palette, Database, Info, Sun, Moon, Download, Trash2, CheckCheck, Save, Sparkles, Crown, RefreshCw } from 'lucide-react'
+
+declare const __COMMIT_HASH__: string
+declare const __COMMIT_DATE__: string
 import { useNavigate } from 'react-router-dom'
 import { useThemeStore } from '@/store/theme'
 import { useProfileStore } from '@/store/profile'
@@ -10,7 +13,6 @@ import { db } from '@/services/db'
 import { inputCls, inputStyle, Field } from '@/components/shared'
 import { cn } from '@/lib/utils'
 
-const APP_VERSION = '0.1.0'
 
 // ─── Section wrapper ────────────────────────────────────────────
 function Section({
@@ -362,19 +364,68 @@ function DataSection() {
 
 // ─── Sobre ──────────────────────────────────────────────────────
 function AboutSection() {
+  const [updating, setUpdating] = useState(false)
+  const [updateStatus, setUpdateStatus] = useState<'idle' | 'done' | 'error'>('idle')
+
+  const commitDate = __COMMIT_DATE__
+    ? new Intl.DateTimeFormat('pt-BR', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      }).format(new Date(__COMMIT_DATE__))
+    : '—'
+
+  async function handleUpdate() {
+    setUpdating(true)
+    setUpdateStatus('idle')
+    try {
+      if ('serviceWorker' in navigator) {
+        const reg = await navigator.serviceWorker.ready
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          window.location.reload()
+        }, { once: true })
+        await reg.update()
+      }
+      setUpdateStatus('done')
+    } catch {
+      setUpdateStatus('error')
+    } finally {
+      setUpdating(false)
+      setTimeout(() => setUpdateStatus('idle'), 3000)
+    }
+  }
+
   return (
     <Section icon={<Info size={16} />} title="Sobre">
-      <div className="flex flex-col gap-3">
-        {[
-          { label: 'Versão', value: APP_VERSION },
-          { label: 'Armazenamento', value: 'IndexedDB (local, offline-first)' },
-          { label: 'Plataforma', value: 'PWA / Web' },
-        ].map(({ label, value }) => (
-          <div key={label} className="flex items-center justify-between">
-            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{label}</span>
-            <span className="text-xs font-medium font-mono" style={{ color: 'var(--text-secondary)' }}>{value}</span>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Último commit</span>
+            <span className="text-xs font-medium font-mono" style={{ color: 'var(--text-secondary)' }}>{__COMMIT_HASH__ || '—'}</span>
           </div>
-        ))}
+          <div className="flex items-center justify-between">
+            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Data do commit</span>
+            <span className="text-xs font-medium font-mono" style={{ color: 'var(--text-secondary)' }}>{commitDate}</span>
+          </div>
+        </div>
+        <div className="border-t" style={{ borderColor: 'var(--border)' }} />
+        <ActionRow
+          label="Atualização"
+          description="Força a busca pela versão mais recente da aplicação."
+          action={
+            <button
+              onClick={handleUpdate}
+              disabled={updating}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-input border text-xs font-medium transition-all hover:opacity-80 disabled:opacity-50"
+              style={{
+                borderColor: updateStatus === 'done' ? 'var(--status-paid)' : 'var(--border)',
+                color: updateStatus === 'done' ? 'var(--status-paid)' : 'var(--text-secondary)',
+              }}
+            >
+              <RefreshCw size={12} className={updating ? 'animate-spin' : ''} />
+              {updating ? 'Verificando…' : updateStatus === 'done' ? 'Atualizado!' : 'Atualizar'}
+            </button>
+          }
+        />
       </div>
     </Section>
   )
