@@ -191,19 +191,23 @@ input[type="number"] {
   to   { opacity: 1; transform: translateX(0); }
 }
 
-/* Scrollbar transparente no PWA mobile */
+/* Scrollbar oculta no PWA mobile */
+html.pwa-mobile,
 html.pwa-mobile * {
-  scrollbar-width: none;
-  scrollbar-color: transparent transparent;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
+html.pwa-mobile::-webkit-scrollbar,
 html.pwa-mobile ::-webkit-scrollbar {
-  display: none;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
-html.pwa-mobile ::-webkit-scrollbar-thumb {
-  background: transparent;
-}
+html.pwa-mobile::-webkit-scrollbar-thumb,
+html.pwa-mobile ::-webkit-scrollbar-thumb,
+html.pwa-mobile::-webkit-scrollbar-thumb:hover,
 html.pwa-mobile ::-webkit-scrollbar-thumb:hover {
-  background: transparent;
+  background: transparent !important;
 }
 
 html.pwa-mobile,
