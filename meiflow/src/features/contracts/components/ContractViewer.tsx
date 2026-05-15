@@ -30,8 +30,11 @@ const BASE_PRINT_STYLES = `
     #contract-print h3 { font-size: 12pt; margin-top: 16px; }
     #contract-print p, #contract-print li { margin-bottom: 6px; }
     #contract-print hr { border-top: 1px solid #ccc; margin: 20px 0; }
-    #contract-print ul { padding-left: 20px; }
+    #contract-print ul, #contract-print ol { padding-left: 20px; }
     #contract-print strong { font-weight: bold; }
+    #contract-print u { text-decoration: underline; }
+    #contract-print blockquote { border-left: 3px solid #999; padding-left: 12px; margin: 10px 0; font-style: italic; color: #444; }
+    #contract-print a { color: #1A65C0; text-decoration: underline; }
   }
 `
 
@@ -79,7 +82,11 @@ export default function ContractViewer({ contract, onClose }: Props) {
     navigator.clipboard.writeText(url).then(() => alert(`Link copiado!\n\n${url}`))
   }
 
-  const html = renderMarkdown(contract.content)
+  // Contratos novos chegam em HTML (TipTap); contratos legados em markdown.
+  // Detectamos pela presença de uma tag HTML no começo.
+  const html = contract.content.trimStart().startsWith('<')
+    ? contract.content
+    : renderMarkdown(contract.content)
 
   return (
     <Modal open title={contract.title} onClose={onClose} size="lg">
@@ -112,10 +119,13 @@ export default function ContractViewer({ contract, onClose }: Props) {
           #contract-print h2 { font-size: 15px; font-weight: 700; margin-top: 24px; margin-bottom: 6px; color: var(--text-primary); padding-top: 16px; border-top: 1px solid var(--border); }
           #contract-print h3 { font-size: 13px; font-weight: 600; margin-top: 14px; color: var(--text-primary); }
           #contract-print p { font-size: 13px; line-height: 1.7; margin-bottom: 8px; color: var(--text-secondary); }
-          #contract-print ul { padding-left: 20px; margin-bottom: 8px; }
+          #contract-print ul, #contract-print ol { padding-left: 20px; margin-bottom: 8px; }
           #contract-print li { font-size: 13px; line-height: 1.6; color: var(--text-secondary); margin-bottom: 4px; }
           #contract-print strong { font-weight: 700; color: var(--text-primary); }
           #contract-print em { font-style: italic; }
+          #contract-print u { text-decoration: underline; }
+          #contract-print blockquote { border-left: 3px solid var(--border); padding: 2px 0 2px 12px; margin: 10px 0; color: var(--text-tertiary); font-style: italic; }
+          #contract-print a { color: var(--primary); text-decoration: underline; }
           #contract-print code { font-family: monospace; font-size: 12px; background: var(--bg-1); padding: 1px 4px; border-radius: 3px; }
           #contract-print hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
         `}</style>

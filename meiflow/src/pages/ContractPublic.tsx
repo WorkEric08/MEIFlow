@@ -51,7 +51,10 @@ export default function ContractPublic() {
     )
   }
 
-  const html = renderMarkdown(contract.content)
+  // Compat: contratos novos vêm em HTML (TipTap), legados em markdown.
+  const html = contract.content.trimStart().startsWith('<')
+    ? contract.content
+    : renderMarkdown(contract.content)
 
   function handleAccept() {
     if (!slug) return
@@ -87,9 +90,13 @@ export default function ContractPublic() {
             .contract-body h2 { font-size: 15px; font-weight: 700; margin-top: 24px; margin-bottom: 6px; color: #F1F5F9; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06); }
             .contract-body h3 { font-size: 13px; font-weight: 600; margin-top: 14px; color: #F1F5F9; }
             .contract-body p { font-size: 14px; line-height: 1.75; margin-bottom: 10px; color: #94A3B8; }
-            .contract-body ul { padding-left: 20px; margin-bottom: 10px; }
+            .contract-body ul, .contract-body ol { padding-left: 20px; margin-bottom: 10px; }
             .contract-body li { font-size: 14px; line-height: 1.6; color: #94A3B8; margin-bottom: 4px; }
             .contract-body strong { font-weight: 700; color: #F1F5F9; }
+            .contract-body em { font-style: italic; }
+            .contract-body u { text-decoration: underline; }
+            .contract-body blockquote { border-left: 3px solid rgba(255,255,255,0.18); padding: 2px 0 2px 12px; margin: 10px 0; color: #64748B; font-style: italic; }
+            .contract-body a { color: #3B8CE8; text-decoration: underline; }
             .contract-body hr { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 24px 0; }
           `}</style>
           <div className="contract-body" dangerouslySetInnerHTML={{ __html: html }} />

@@ -1,107 +1,86 @@
-import { useState, useEffect } from 'react'
-import { useForm, Controller } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { FileText, Lock } from 'lucide-react'
-import { Modal, Field, inputCls, inputStyle } from '@/components/shared'
-import CustomSelect from '@/components/CustomSelect'
-import { useUnsavedConfirm } from '@/hooks/useUnsavedConfirm'
-import MarkdownEditor from '@/components/MarkdownEditor'
-import { useClients } from '@/features/clients/hooks'
-import { useProjects } from '@/features/projects/hooks'
-import { contractSchema, useCreateContract, type ContractFormValues } from '../index'
-import { useProfileStore } from '@/store/profile'
-import { CONTRACT_TEMPLATES, interpolate } from '../templates'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { FileText, Lock, Sparkles, ChevronRight } from 'lucide-react'
+import { Modal } from '@/components/shared'
+import { CONTRACT_TEMPLATES } from '../templates'
 import { usePlanGate } from '@/hooks/usePlanGate'
 import UpgradeModal from '@/components/UpgradeModal'
-import type { Client, Project } from '@/services/db'
 
 interface Props {
   open: boolean
   onClose: () => void
-  onCreated?: (id: string) => void
 }
 
-export default function ContractModal({ open, onClose, onCreated }: Props) {
-  const create = useCreateContract()
-  const { data: clients = [] } = useClients()
-  const { data: projects = [] } = useProjects()
-  const { profile } = useProfileStore()
+/**
+ * Tela inicial de criação de contrato.
+ * Pergunta "como começar" — modelo pronto ou em branco — e navega
+ * para a página dedicada de edição. Linguagem direta, cards grandes
+ * e descrições para que mesmo quem não é técnico entenda na primeira leitura.
+ */
+export default function ContractModal({ open, onClose }: Props) {
+  const navigate = useNavigate()
   const planGate = usePlanGate()
-  const [_selectedTemplate, setSelectedTemplate] = useState('')
-  const [step, setStep] = useState<'template' | 'form'>('template')
   const [upgradeReason, setUpgradeReason] = useState('')
 
-  const { register, handleSubmit, watch, setValue, reset, control, formState: { errors, isDirty } } =
-    useForm<ContractFormValues>({
-      resolver: zodResolver(contractSchema),
-      defaultValues: { projectId: '', clientId: '', title: '', content: '' },
-    })
-
-  const { handleClose, dialog } = useUnsavedConfirm(step === 'form' && isDirty, onClose)
-
-  const watchedClientId  = watch('clientId')
-  const watchedProjectId = watch('projectId')
-  const filteredProjects = projects.filter((p) => !watchedClientId || p.clientId === watchedClientId)
-
-  useEffect(() => {
-    if (!open) {
-      setStep('template')
-      setSelectedTemplate('')
-      reset()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open])
-
-  function applyTemplate(templateId: string) {
-    const tmpl = CONTRACT_TEMPLATES.find((t) => t.id === templateId)
-    if (!tmpl) return
-
-    const client  = clients.find((c) => c.id === watchedClientId) as Client | undefined
-    const project = projects.find((p) => p.id === watchedProjectId) as Project | undefined
-
-    const content = interpolate(tmpl.content, {
-      client_name:     client?.name ?? '[Nome do cliente]',
-      client_company:  client?.company ?? '',
-      contractor_name: profile.name || '[Seu nome]',
-      project_name:    project?.name ?? '[Nome do projeto]',
-      value:           project ? formatCurrency(project.value) : '[Valor]',
-      start_date:      project ? formatDate(project.startDate) : '[Data de início]',
-      end_date:        project?.endDate ? formatDate(project.endDate) : undefined,
-      today:           formatDate(new Date()),
-    })
-
-    setValue('title', tmpl.name, { shouldDirty: true })
-    setValue('content', content, { shouldDirty: true })
-    setSelectedTemplate(templateId)
-    setStep('form')
-  }
-
-  function onSubmit(values: ContractFormValues) {
-    create.mutate(values, {
-      onSuccess: (contract) => {
-        onCreated?.(contract.id)
-        onClose()
-      },
-    })
+  function go(target: string) {
+    onClose()
+    navigate(target)
   }
 
   return (
     <>
-      {dialog}
       <UpgradeModal
         open={!!upgradeReason}
         onClose={() => setUpgradeReason('')}
         reason={upgradeReason}
       />
-      <Modal open={open} onClose={handleClose} title="Novo contrato" size="lg">
-      {step === 'template' ? (
+      <Modal open={open} onClose={onClose} title="Como você quer começar?" size="lg">
         <div className="flex flex-col gap-4">
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            Escolha um template para começar, ou clique em "Em branco" para escrever do zero.
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+            Escolha um modelo pronto para acelerar — você pode mudar tudo depois.
+            Ou comece com uma folha em branco e escreva do seu jeito.
           </p>
 
-          <div className="grid grid-cols-2 gap-3">
+          {/* ── Em branco (em destaque) ── */}
+          <button
+            onClick={() => go('/contracts/new')}
+            data-pwa-tap
+            className="flex items-center gap-4 p-4 sm:p-5 rounded-card border-2 text-left transition-all hover:opacity-90 active:scale-[0.99]"
+            style={{
+              background: 'var(--primary-subtle)',
+              borderColor: 'var(--blueprint-border)',
+            }}
+          >
+            <div
+              className="w-12 h-12 rounded-input flex items-center justify-center shrink-0 text-xl"
+              style={{ background: 'var(--primary)', color: '#fff' }}
+            >
+              <Sparkles size={22} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+                  Começar em branco
+                </p>
+              </div>
+              <p className="text-xs sm:text-sm mt-0.5 leading-snug" style={{ color: 'var(--text-secondary)' }}>
+                Folha vazia para escrever o contrato do zero, com formatação visual.
+              </p>
+            </div>
+            <ChevronRight size={18} className="shrink-0" style={{ color: 'var(--primary)' }} />
+          </button>
+
+          {/* ── Separador ── */}
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px" style={{ background: 'var(--border)' }} />
+            <span className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--text-tertiary)' }}>
+              Modelos prontos
+            </span>
+            <div className="flex-1 h-px" style={{ background: 'var(--border)' }} />
+          </div>
+
+          {/* ── Templates ── */}
+          <div className="flex flex-col gap-2.5">
             {CONTRACT_TEMPLATES.map((t, idx) => {
               const gate = planGate.check('contract-template', idx)
               const locked = !gate.allowed
@@ -110,116 +89,70 @@ export default function ContractModal({ open, onClose, onCreated }: Props) {
                   key={t.id}
                   onClick={() => {
                     if (locked) { setUpgradeReason(gate.reason); return }
-                    applyTemplate(t.id)
+                    go(`/contracts/new?template=${t.id}`)
                   }}
-                  className="flex flex-col items-start gap-1.5 p-4 rounded-card border text-left transition-all duration-fast"
+                  data-pwa-tap
+                  className="flex items-start gap-3.5 p-3.5 sm:p-4 rounded-card border text-left transition-all hover:opacity-90 active:scale-[0.99]"
                   style={{
                     background: 'var(--bg-2)',
-                    borderColor: locked ? 'var(--border)' : 'var(--blueprint-border)',
-                    opacity: locked ? 0.65 : 1,
-                    cursor: locked ? 'default' : 'pointer',
+                    borderColor: 'var(--border)',
+                    opacity: locked ? 0.7 : 1,
                   }}
                 >
-                  <div className="flex items-center gap-2">
-                    {locked
-                      ? <Lock size={14} style={{ color: 'var(--text-tertiary)' }} />
-                      : <FileText size={14} style={{ color: 'var(--primary)' }} />
-                    }
-                    <span className="text-sm font-semibold" style={{ color: locked ? 'var(--text-tertiary)' : 'var(--text-primary)' }}>
-                      {t.name}
-                    </span>
+                  <div
+                    className="w-11 h-11 rounded-input flex items-center justify-center shrink-0 text-xl select-none"
+                    style={{
+                      background: locked ? 'var(--bg-1)' : 'var(--primary-subtle)',
+                      color: locked ? 'var(--text-tertiary)' : 'var(--primary)',
+                    }}
+                  >
+                    {locked ? <Lock size={18} /> : <span aria-hidden>{t.emoji}</span>}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{t.category}</span>
-                    {locked && (
-                      <span
-                        className="text-xs font-semibold px-1.5 py-0.5 rounded-badge"
-                        style={{ background: 'var(--primary-subtle)', color: 'var(--primary)' }}
-                      >
-                        Pro
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm sm:text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+                        {t.name}
+                      </p>
+                      <span className="text-[10px] font-semibold uppercase tracking-widest px-1.5 py-0.5 rounded-badge"
+                        style={{ background: 'var(--bg-1)', color: 'var(--text-tertiary)' }}>
+                        {t.category}
                       </span>
-                    )}
+                      {locked && (
+                        <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded-badge"
+                          style={{ background: 'var(--primary-subtle)', color: 'var(--primary)' }}>
+                          Pro
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs sm:text-sm mt-1 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                      {t.description}
+                    </p>
                   </div>
+                  {!locked && (
+                    <ChevronRight size={18} className="shrink-0 mt-1.5" style={{ color: 'var(--text-tertiary)' }} />
+                  )}
                 </button>
               )
             })}
           </div>
 
-          <button onClick={() => setStep('form')}
-            className="w-full py-2.5 rounded-input border text-sm font-medium transition-all hover:opacity-80"
-            style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
-            Em branco — escrever do zero
-          </button>
+          {/* ── Dica simpática para quem é mais leigo ── */}
+          <div
+            className="flex items-start gap-3 p-3 rounded-card border"
+            style={{
+              background: 'var(--bg-2)',
+              borderColor: 'var(--border)',
+              borderStyle: 'dashed',
+            }}
+          >
+            <FileText size={16} className="mt-0.5 shrink-0" style={{ color: 'var(--text-tertiary)' }} />
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>
+              Você pode editar qualquer texto depois — incluindo trocar nomes, valores, prazos e cláusulas inteiras.
+              É só clicar e escrever.
+            </p>
+          </div>
         </div>
-      ) : (
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Cliente *" error={errors.clientId?.message}>
-              <Controller name="clientId" control={control} render={({ field }) => (
-                <CustomSelect
-                  options={clients.map((c) => ({ value: c.id, label: c.name }))}
-                  placeholder="Selecione…"
-                  value={field.value}
-                  onChange={field.onChange}
-                  onBlur={field.onBlur}
-                  error={!!errors.clientId}
-                />
-              )} />
-            </Field>
-            <Field label="Projeto *" error={errors.projectId?.message}>
-              <Controller name="projectId" control={control} render={({ field }) => (
-                <CustomSelect
-                  options={filteredProjects.map((p) => ({ value: p.id, label: p.name }))}
-                  placeholder="Selecione…"
-                  value={field.value}
-                  onChange={field.onChange}
-                  onBlur={field.onBlur}
-                  error={!!errors.projectId}
-                />
-              )} />
-            </Field>
-          </div>
-
-          <Field label="Título do contrato *" error={errors.title?.message}>
-            <input {...register('title')} placeholder="Ex: Contrato de desenvolvimento web"
-              className={inputCls(!!errors.title)} style={inputStyle(!!errors.title)} />
-          </Field>
-
-          <Field label="Conteúdo *" error={errors.content?.message}>
-            <Controller
-              name="content"
-              control={control}
-              render={({ field }) => (
-                <MarkdownEditor
-                  value={field.value}
-                  onChange={field.onChange}
-                  error={!!errors.content}
-                />
-              )}
-            />
-          </Field>
-
-          <div className="flex justify-between items-center pt-2">
-            <button type="button" onClick={() => setStep('template')}
-              className="text-sm transition-all hover:opacity-70" style={{ color: 'var(--text-tertiary)' }}>
-              ← Trocar template
-            </button>
-            <div className="flex gap-2">
-              <button type="button" onClick={handleClose}
-                className="px-4 py-2 rounded-input text-sm border transition-all hover:opacity-80"
-                style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
-                Cancelar
-              </button>
-              <button type="submit" disabled={create.isPending}
-                className="px-4 py-2 rounded-input text-sm font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50"
-                style={{ background: 'var(--primary)' }}>
-                {create.isPending ? 'Criando…' : 'Criar contrato'}
-              </button>
-            </div>
-          </div>
-        </form>
-      )}
-    </Modal>
+      </Modal>
     </>
   )
 }

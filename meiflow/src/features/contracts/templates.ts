@@ -2,6 +2,10 @@ export interface ContractTemplate {
   id: string
   name: string
   category: string
+  /** Frase curta e amigável que aparece no card de seleção */
+  description: string
+  /** Emoji ilustrativo, para reforço visual rápido (especialmente útil em mobile) */
+  emoji: string
   content: string
 }
 
@@ -28,8 +32,10 @@ Fica eleito o foro da comarca de domicílio do **CONTRATADO** para dirimir quais
 export const CONTRACT_TEMPLATES: ContractTemplate[] = [
   {
     id: 'web-development',
-    name: 'Desenvolvimento web',
+    name: 'Desenvolvimento de site / sistema',
     category: 'Tecnologia',
+    emoji: '💻',
+    description: 'Para quem cria sites, lojas online, sistemas ou aplicativos. Inclui prazos, entregas, suporte e propriedade do código.',
     content: `# Contrato de Prestação de Serviços de Desenvolvimento Web
 
 **CONTRATANTE:** {{client_name}}{{client_company}}
@@ -88,8 +94,10 @@ Assinatura: ___________________________`,
 
   {
     id: 'design',
-    name: 'Design gráfico / UI',
+    name: 'Design e identidade visual',
     category: 'Design',
+    emoji: '🎨',
+    description: 'Para criação de logos, identidade visual, peças gráficas e interfaces. Inclui rodadas de revisão e direitos de uso.',
     content: `# Contrato de Prestação de Serviços de Design
 
 **CONTRATANTE:** {{client_name}}{{client_company}}
@@ -136,8 +144,10 @@ Assinatura: ___________________________`,
 
   {
     id: 'consultoria',
-    name: 'Consultoria',
+    name: 'Consultoria e assessoria',
     category: 'Serviços',
+    emoji: '💡',
+    description: 'Para quem oferece consultoria, mentorias, assessoria ou orientações periódicas. Cobre escopo, reuniões e independência profissional.',
     content: `# Contrato de Consultoria
 
 **CONTRATANTE:** {{client_name}}{{client_company}}
@@ -184,8 +194,10 @@ Assinatura: ___________________________`,
 
   {
     id: 'fotografia',
-    name: 'Fotografia',
+    name: 'Fotografia e captação de imagens',
     category: 'Criativo',
+    emoji: '📷',
+    description: 'Para fotógrafos: cobre data, local, entregáveis, tratamento de imagens e direitos de uso comercial.',
     content: `# Contrato de Serviços Fotográficos
 
 **CONTRATANTE:** {{client_name}}{{client_company}}

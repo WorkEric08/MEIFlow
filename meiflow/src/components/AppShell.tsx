@@ -9,6 +9,7 @@ import {
   Settings,
 } from 'lucide-react'
 import NotificationBell from '@/components/NotificationBell'
+import OfflineIndicator from '@/components/OfflineIndicator'
 import PWAInstallButton from '@/components/PWAInstallButton'
 import PWANativeShell from '@/components/PWANativeShell'
 import { triggerHaptic } from '@/hooks/useHaptic'
@@ -34,10 +35,11 @@ export default function AppShell() {
       <aside className="hidden lg:flex flex-col w-56 shrink-0 border-r sticky top-0 h-dvh pwa-sidebar"
         style={{ background: 'var(--bg-1)', borderColor: 'var(--border)' }}>
 
-        <div className="px-5 py-6 border-b pwa-sidebar-divider" style={{ borderColor: 'var(--border)' }}>
+        <div className="px-5 py-6 border-b pwa-sidebar-divider flex items-center justify-between gap-2" style={{ borderColor: 'var(--border)' }}>
           <span className="text-xl font-extrabold tracking-tight" style={{ color: 'var(--text-primary)' }}>
             MEI<span style={{ color: 'var(--primary)' }}>Flow</span>
           </span>
+          <OfflineIndicator />
         </div>
 
         <nav className="flex-1 px-3 py-4 flex flex-col gap-1 overflow-y-auto min-h-0">
@@ -85,9 +87,12 @@ export default function AppShell() {
             paddingTop: 'max(0.75rem, env(safe-area-inset-top))',
           }}
         >
-          <span className="text-lg font-extrabold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-            MEI<span style={{ color: 'var(--primary)' }}>Flow</span>
-          </span>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-lg font-extrabold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+              MEI<span style={{ color: 'var(--primary)' }}>Flow</span>
+            </span>
+            <OfflineIndicator />
+          </div>
           <div className="flex items-center gap-0.5">
             <NotificationBell />
             <NavLink

@@ -8,6 +8,7 @@ const ClientsPage    = lazy(() => import('@/pages/ClientsPage'))
 const ProjectsPage   = lazy(() => import('@/pages/ProjectsPage'))
 const PaymentsPage   = lazy(() => import('@/pages/PaymentsPage'))
 const ContractsPage  = lazy(() => import('@/pages/ContractsPage'))
+const ContractEditor = lazy(() => import('@/pages/ContractEditor'))
 const LinkPageEditor = lazy(() => import('@/pages/LinkPageEditor'))
 const LinkPagePublic  = lazy(() => import('@/pages/LinkPagePublic'))
 const ContractPublic  = lazy(() => import('@/pages/ContractPublic'))
@@ -28,6 +29,8 @@ export const router = createBrowserRouter([
       { path: 'projects',     element: <Wrap><ProjectsPage /></Wrap> },
       { path: 'payments',     element: <Wrap><PaymentsPage /></Wrap> },
       { path: 'contracts',    element: <Wrap><ContractsPage /></Wrap> },
+      { path: 'contracts/new',       element: <Wrap><ContractEditor /></Wrap> },
+      { path: 'contracts/:id/edit',  element: <Wrap><ContractEditor /></Wrap> },
       { path: 'link-page',    element: <Wrap><LinkPageEditor /></Wrap> },
       { path: 'settings',     element: <Wrap><SettingsPage /></Wrap> },
     ],

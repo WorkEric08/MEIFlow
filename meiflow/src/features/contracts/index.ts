@@ -71,6 +71,14 @@ export function useContracts() {
   return useQuery({ queryKey: CONTRACTS_KEY, queryFn: contractService.list })
 }
 
+export function useContract(id: string | undefined) {
+  return useQuery({
+    queryKey: [...CONTRACTS_KEY, 'id', id],
+    queryFn: async () => (id ? db.contracts.get(id) : undefined),
+    enabled: !!id,
+  })
+}
+
 export function useContractBySlug(slug: string) {
   return useQuery({
     queryKey: [...CONTRACTS_KEY, 'slug', slug],

@@ -84,6 +84,15 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // SPA fallback: qualquer rota navegada (clients/, projects/, contracts/, etc.)
+        // serve o index.html do cache — assim o PWA abre offline em qualquer rota.
+        navigateFallback: '/index.html',
+        // Rotas que NÃO devem cair no fallback (deixa o SW responder normalmente).
+        navigateFallbackDenylist: [/^\/api\//],
+        // Garantir que SW novo assume controle imediatamente após atualização
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -101,6 +110,18 @@ export default defineConfig({
             options: {
               cacheName: 'google-fonts-webfonts',
               expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            // Rota pública de aceite — cache-first para abrir mesmo offline
+            // (o conteúdo do contrato em si vem do Dexie/IndexedDB do dono)
+            urlPattern: /\/contract\/[^/]+$/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'contract-public-pages',
+              networkTimeoutSeconds: 3,
+              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 30 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },

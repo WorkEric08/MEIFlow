@@ -1,0 +1,1 @@
+import{z as a,A as s}from"./index-DiJVE-_V.js";const n={clients:3,activeProjects:2,contractTemplates:1},l=a()(s(t=>({plan:"free",upgradedAt:null,setPlan:e=>t({plan:e,upgradedAt:e==="pro"?new Date:null})}),{name:"meiflow-plan"}));export{n as F,l as u};

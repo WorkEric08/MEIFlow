@@ -1,0 +1,1 @@
+import{z as i,A as a}from"./index-DiJVE-_V.js";const l=i()(a(e=>({profile:{name:"",email:"",company:""},setProfile:o=>e(r=>({profile:{...r.profile,...o}}))}),{name:"meiflow-profile"}));export{l as u};

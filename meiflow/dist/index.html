@@ -10,6 +10,7 @@
       id="viewport-meta"
     />
     <meta name="theme-color" content="#0D1117" id="theme-color-meta" />
+    <meta name="color-scheme" content="light dark" id="color-scheme-meta" />
     <meta name="description" content="Plataforma completa para freelancers e MEIs brasileiros" />
 
     <!-- Capacidades de "web app" — fazem o site se comportar como aplicativo
@@ -34,15 +35,27 @@
         window.__deferredInstallPrompt = e;
       });
 
-      // Aplica tema salvo antes do primeiro render (evita flash)
+      // Aplica tema salvo antes do primeiro render (evita flash) e
+      // força o navegador a usar APENAS o tema do app (ignora o tema do SO/navegador).
       (function() {
+        var theme = 'dark';
         try {
           var stored = localStorage.getItem('meiflow-theme');
-          var theme = stored ? JSON.parse(stored).state?.theme : 'dark';
-          if (theme !== 'light') document.documentElement.classList.add('dark');
-        } catch(_) {
-          document.documentElement.classList.add('dark');
-        }
+          theme = (stored && JSON.parse(stored).state?.theme) || 'dark';
+        } catch(_) {}
+
+        var isDark = theme !== 'light';
+        var html = document.documentElement;
+        if (isDark) html.classList.add('dark');
+
+        // color-scheme isola scrollbars, inputs e form controls nativos do tema do SO
+        var cs = document.getElementById('color-scheme-meta');
+        if (cs) cs.setAttribute('content', isDark ? 'dark' : 'light');
+        html.style.colorScheme = isDark ? 'dark' : 'light';
+
+        // theme-color (status bar / address bar) acompanha o tema escolhido
+        var tc = document.getElementById('theme-color-meta');
+        if (tc) tc.setAttribute('content', isDark ? '#0D1117' : '#F4F6FA');
       })();
 
       // Detecta modo standalone e ajusta viewport + classes <html> antes do React montar.
@@ -81,8 +94,8 @@
         } catch(_) {}
       })();
     </script>
-    <script type="module" crossorigin src="/assets/index-DOv-21NI.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-DGl-6eBr.css">
+    <script type="module" crossorigin src="/assets/index-DiJVE-_V.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-B5eR_Qvr.css">
   <link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
   <body>
     <div id="root"></div>
