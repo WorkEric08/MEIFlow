@@ -268,6 +268,18 @@ html.pwa-mobile select {
   font-size: max(16px, 1em);
 }
 
+/* PWA instalado (standalone): a sidebar fica transparente — sem painel,
+   sem borda divisória, sem regra de divisão interna. Os itens de nav
+   continuam clicáveis sobre o fundo da página, com visual mais "appy". */
+html.pwa-standalone .pwa-sidebar {
+  background: transparent !important;
+  border-right-color: transparent !important;
+  backdrop-filter: none;
+}
+html.pwa-standalone .pwa-sidebar .pwa-sidebar-divider {
+  border-color: transparent !important;
+}
+
 /* Animações respeitam preferência do usuário */
 @media (prefers-reduced-motion: reduce) {
   html.pwa-mobile main,

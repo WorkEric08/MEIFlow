@@ -5,7 +5,9 @@
       "Bash(npx tsc *)",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Pichau\\\\Desktop\\\\meiflow-setup\" -Recurse -Filter \"*.ts\" -o \"*.tsx\")",
       "Bash(Select-Object -ExpandProperty FullName)",
-      "Bash(npx vite *)"
+      "Bash(npx vite *)",
+      "PowerShell(\\(Get-Content meiflow\\\\src\\\\styles\\\\globals.css | Measure-Object -Line\\).Lines)",
+      "PowerShell(\\(Get-Content C:\\\\Users\\\\Pichau\\\\Desktop\\\\meiflow-setup\\\\meiflow\\\\src\\\\styles\\\\globals.css | Measure-Object -Line\\).Lines)"
     ]
   }
 }

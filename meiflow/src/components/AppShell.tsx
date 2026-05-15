@@ -28,11 +28,13 @@ export default function AppShell() {
     <div className="flex min-h-dvh" style={{ background: 'var(--bg-0)' }}>
       <PWANativeShell />
 
-      {/* ── Sidebar (lg+) ── */}
-      <aside className="hidden lg:flex flex-col w-56 shrink-0 border-r sticky top-0 h-dvh"
+      {/* ── Sidebar (lg+) ──
+          No PWA instalado (standalone): fica transparente — sem bg, sem borda, sem divisores.
+          Os itens de navegação seguem visíveis e funcionais sobre o fundo da página. */}
+      <aside className="hidden lg:flex flex-col w-56 shrink-0 border-r sticky top-0 h-dvh pwa-sidebar"
         style={{ background: 'var(--bg-1)', borderColor: 'var(--border)' }}>
 
-        <div className="px-5 py-6 border-b" style={{ borderColor: 'var(--border)' }}>
+        <div className="px-5 py-6 border-b pwa-sidebar-divider" style={{ borderColor: 'var(--border)' }}>
           <span className="text-xl font-extrabold tracking-tight" style={{ color: 'var(--text-primary)' }}>
             MEI<span style={{ color: 'var(--primary)' }}>Flow</span>
           </span>
@@ -56,7 +58,7 @@ export default function AppShell() {
           ))}
         </nav>
 
-        <div className="px-3 py-4 border-t flex flex-col gap-3"
+        <div className="px-3 py-4 border-t flex flex-col gap-3 pwa-sidebar-divider"
           style={{ borderColor: 'var(--border)' }}>
           <PWAInstallButton />
           <div className="flex items-center justify-center gap-8">
