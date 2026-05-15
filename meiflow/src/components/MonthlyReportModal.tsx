@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { Printer, BarChart3, ArrowUpRight, ArrowDownRight, AlertCircle } from 'lucide-react'
+import { Printer, BarChart3 } from 'lucide-react'
 import { Modal } from '@/components/shared'
 import CustomSelect from '@/components/CustomSelect'
 import { usePayments } from '@/features/payments/index'
@@ -142,7 +142,6 @@ export default function MonthlyReportModal({ open, onClose }: Props) {
                 count: paid.length,
                 color: 'var(--status-paid)',
                 bg: 'var(--status-paid-bg)',
-                Icon: ArrowUpRight,
               },
               {
                 label: 'Pendente',
@@ -150,7 +149,6 @@ export default function MonthlyReportModal({ open, onClose }: Props) {
                 count: pending.length,
                 color: 'var(--status-pending)',
                 bg: 'var(--status-pending-bg)',
-                Icon: AlertCircle,
               },
               {
                 label: 'Atrasado',
@@ -158,9 +156,8 @@ export default function MonthlyReportModal({ open, onClose }: Props) {
                 count: overdue.length,
                 color: 'var(--status-overdue)',
                 bg: 'var(--status-overdue-bg)',
-                Icon: ArrowDownRight,
               },
-            ].map(({ label, value, count, color, bg, Icon }) => (
+            ].map(({ label, value, count, color, bg }) => (
               <div
                 key={label}
                 className="p-2 sm:p-3.5 rounded-card border flex flex-col gap-1 sm:gap-2 min-w-0 overflow-hidden"
@@ -168,11 +165,10 @@ export default function MonthlyReportModal({ open, onClose }: Props) {
               >
                 <div className="flex items-center justify-between gap-1 min-w-0">
                   <span
-                    className="inline-flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-badge font-bold uppercase tracking-wider sm:tracking-widest min-w-0"
+                    className="inline-flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-badge font-bold uppercase tracking-wider sm:tracking-widest min-w-0 whitespace-nowrap"
                     style={{ background: bg, color, fontSize: 'clamp(8px, 2.1vw, 10px)' }}
                   >
-                    <Icon size={11} strokeWidth={2.5} className="shrink-0" />
-                    <span className="truncate">{label}</span>
+                    {label}
                   </span>
                   <span
                     className="font-mono tabular-nums shrink-0 whitespace-nowrap"
