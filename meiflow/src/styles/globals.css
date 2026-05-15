@@ -280,6 +280,16 @@ html.pwa-standalone .pwa-sidebar .pwa-sidebar-divider {
   border-color: transparent !important;
 }
 
+/* Modal aberto: congela backdrop-filter do chrome (header e bottom nav) para
+   que o teclado virtual / resize do viewport não cause "mudanças de blur"
+   visíveis atrás do modal. */
+html.modal-open .backdrop-blur,
+html.modal-open header.backdrop-blur,
+html.modal-open nav.backdrop-blur {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
 /* Animações respeitam preferência do usuário */
 @media (prefers-reduced-motion: reduce) {
   html.pwa-mobile main,

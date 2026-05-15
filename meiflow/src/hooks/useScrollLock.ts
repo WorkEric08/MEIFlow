@@ -21,6 +21,9 @@ function applyLock() {
     }
     html.style.overflow = 'hidden'
     body.style.touchAction = 'none'
+    // Marca o documento para o CSS desligar backdrop-filters do chrome enquanto
+    // houver modal aberto — evita "mudanças de blur" quando o teclado abre.
+    html.classList.add('modal-open')
   }
 }
 
@@ -31,6 +34,7 @@ function releaseLock() {
     html.style.overflow = savedOverflow
     body.style.paddingRight = savedPaddingRight
     body.style.touchAction = savedTouchAction
+    html.classList.remove('modal-open')
   }
 }
 

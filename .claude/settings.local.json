@@ -7,7 +7,9 @@
       "Bash(Select-Object -ExpandProperty FullName)",
       "Bash(npx vite *)",
       "PowerShell(\\(Get-Content meiflow\\\\src\\\\styles\\\\globals.css | Measure-Object -Line\\).Lines)",
-      "PowerShell(\\(Get-Content C:\\\\Users\\\\Pichau\\\\Desktop\\\\meiflow-setup\\\\meiflow\\\\src\\\\styles\\\\globals.css | Measure-Object -Line\\).Lines)"
+      "PowerShell(\\(Get-Content C:\\\\Users\\\\Pichau\\\\Desktop\\\\meiflow-setup\\\\meiflow\\\\src\\\\styles\\\\globals.css | Measure-Object -Line\\).Lines)",
+      "Bash(ls tsconfig.json)",
+      "Bash(cd meiflow *)"
     ]
   }
 }
