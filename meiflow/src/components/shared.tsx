@@ -261,8 +261,13 @@ export function MetricCard({ label, value, sub, accent, blueprint = false }: Met
           style={{ color: accent ?? 'var(--blueprint-text)' }}>
           {label}
         </p>
-        <p className="text-xl sm:text-2xl font-bold mt-1.5 font-mono leading-tight break-all"
-          style={{ color: 'var(--text-primary)' }}>
+        <p className="font-bold mt-1.5 font-mono leading-tight tabular-nums whitespace-nowrap overflow-hidden"
+          style={{
+            color: 'var(--text-primary)',
+            // Escala suave: cabe no card mais estreito (3-col mobile) sem quebrar
+            fontSize: 'clamp(13px, 4.2vw, 24px)',
+            textOverflow: 'clip',
+          }}>
           {value}
         </p>
         {sub && <p className="text-[11px] sm:text-xs mt-1 leading-snug" style={{ color: 'var(--text-tertiary)' }}>{sub}</p>}
