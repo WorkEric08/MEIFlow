@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Bell, FileText, CreditCard, Info, X, BellOff, CheckCheck, Trash2 } from 'lucide-react'
+import { Bell, FileText, CreditCard, Info, X, BellOff, CheckCheck, Trash2, History } from 'lucide-react'
 import { useNotifStore, type Notification, type NotifType } from '@/store/notifications'
 import { Modal } from '@/components/shared'
 import { timeAgo } from '@/lib/utils'
@@ -97,12 +97,15 @@ function NotifItem({
 }
 
 // ─── Separador de seção ──────────────────────────────────────────
-function SectionLabel({ label }: { label: string }) {
+function SectionLabel({ label, icon }: { label: string; icon?: React.ReactNode }) {
   return (
     <div
-      className="px-5 py-1.5 border-b"
+      className="flex items-center gap-1.5 px-5 py-1.5 border-b"
       style={{ background: 'var(--bg-0)', borderColor: 'var(--border)' }}
     >
+      {icon && (
+        <span style={{ color: 'var(--text-tertiary)' }}>{icon}</span>
+      )}
       <span
         className="text-[10px] font-semibold uppercase tracking-widest"
         style={{ color: 'var(--text-tertiary)' }}
@@ -191,21 +194,21 @@ export default function NotificationBell() {
               </div>
             </div>
           ) : (
-            <div className="overflow-y-auto" style={{ maxHeight: '550px' }}>
+            <div className="overflow-y-auto modal-scroll" style={{ maxHeight: '550px' }}>
               {/* Não lidas */}
               {unread.length > 0 && (
                 <>
-                  {read.length > 0 && <SectionLabel label="Novas" />}
+                  <SectionLabel label="Novas" />
                   {unread.map((n) => (
                     <NotifItem key={n.id} n={n} onMarkRead={markRead} onDelete={deleteOne} />
                   ))}
                 </>
               )}
 
-              {/* Lidas */}
+              {/* Histórico (lidas) */}
               {read.length > 0 && (
                 <>
-                  {unread.length > 0 && <SectionLabel label="Anteriores" />}
+                  <SectionLabel label="Histórico" icon={<History size={10} />} />
                   {read.map((n) => (
                     <NotifItem key={n.id} n={n} onMarkRead={markRead} onDelete={deleteOne} />
                   ))}
