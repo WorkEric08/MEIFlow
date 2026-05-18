@@ -224,7 +224,6 @@ function AppearanceSection() {
 // ─── Sobre ──────────────────────────────────────────────────────
 function AboutSection() {
   const [updating, setUpdating] = useState(false)
-  const [updateStatus, setUpdateStatus] = useState<'idle' | 'done' | 'error'>('idle')
 
   const commitDate = __COMMIT_DATE__
     ? new Intl.DateTimeFormat('pt-BR', {
@@ -235,22 +234,23 @@ function AboutSection() {
 
   async function handleUpdate() {
     setUpdating(true)
-    setUpdateStatus('idle')
     try {
+      // Limpa todos os caches do Service Worker
+      if ('caches' in window) {
+        const keys = await caches.keys()
+        await Promise.all(keys.map((k) => caches.delete(k)))
+      }
+      // Dispara update no SW (não aguarda — o reload já vai buscar tudo novo)
       if ('serviceWorker' in navigator) {
         const reg = await navigator.serviceWorker.ready
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          window.location.reload()
-        }, { once: true })
-        await reg.update()
+        reg.waiting?.postMessage({ type: 'SKIP_WAITING' })
+        reg.update().catch(() => {})
       }
-      setUpdateStatus('done')
     } catch {
-      setUpdateStatus('error')
-    } finally {
-      setUpdating(false)
-      setTimeout(() => setUpdateStatus('idle'), 3000)
+      // ignora erros e recarrega de qualquer forma
     }
+    // Reload imediato — equivalente ao Ctrl+Shift+R
+    window.location.reload()
   }
 
   return (
@@ -275,13 +275,10 @@ function AboutSection() {
               onClick={handleUpdate}
               disabled={updating}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-input border text-xs font-medium transition-all hover:opacity-80 disabled:opacity-50"
-              style={{
-                borderColor: updateStatus === 'done' ? 'var(--status-paid)' : 'var(--border)',
-                color: updateStatus === 'done' ? 'var(--status-paid)' : 'var(--text-secondary)',
-              }}
+              style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
             >
               <RefreshCw size={12} className={updating ? 'animate-spin' : ''} />
-              {updating ? 'Verificando…' : updateStatus === 'done' ? 'Atualizado!' : 'Atualizar'}
+              {updating ? 'Atualizando…' : 'Atualizar'}
             </button>
           }
         />
