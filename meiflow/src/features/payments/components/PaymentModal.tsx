@@ -63,8 +63,10 @@ export default function PaymentModal({ open, onClose, editing }: Props) {
     <>
       {dialog}
       <Modal open={open} onClose={handleClose} title={editing ? 'Editar pagamento' : 'Novo pagamento'}>
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-2.5">
+
+        {/* Cliente + Projeto — 2 colunas */}
+        <div className="grid grid-cols-2 gap-2.5">
           <Field label="Cliente *" error={errors.clientId?.message}>
             <Controller name="clientId" control={control} render={({ field }) => (
               <CustomSelect
@@ -91,6 +93,7 @@ export default function PaymentModal({ open, onClose, editing }: Props) {
           </Field>
         </div>
 
+        {/* Descrição — largura total */}
         <Field label="Descrição *" error={errors.description?.message}>
           <Controller name="description" control={control} render={({ field }) => (
             <input
@@ -102,7 +105,8 @@ export default function PaymentModal({ open, onClose, editing }: Props) {
           )} />
         </Field>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Valor + Vencimento — 2 colunas */}
+        <div className="grid grid-cols-2 gap-2.5">
           <Field label="Valor (R$) *" error={errors.amount?.message}>
             <Controller name="amount" control={control} render={({ field }) => (
               <CurrencyInput
@@ -123,19 +127,21 @@ export default function PaymentModal({ open, onClose, editing }: Props) {
               />
             )} />
           </Field>
-          <Field label="Status">
-            <Controller name="status" control={control} render={({ field }) => (
-              <CustomSelect
-                options={STATUS_OPTIONS}
-                value={field.value}
-                onChange={field.onChange}
-                onBlur={field.onBlur}
-              />
-            )} />
-          </Field>
         </div>
 
-        <div className="flex justify-end gap-2 pt-2">
+        {/* Status — largura total */}
+        <Field label="Status">
+          <Controller name="status" control={control} render={({ field }) => (
+            <CustomSelect
+              options={STATUS_OPTIONS}
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+            />
+          )} />
+        </Field>
+
+        <div className="flex justify-end gap-2 pt-1">
           <button type="button" onClick={handleClose}
             className="px-4 py-2 rounded-input text-sm border transition-all hover:opacity-80"
             style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
