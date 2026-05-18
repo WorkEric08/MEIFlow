@@ -134,7 +134,7 @@ export default function LinkPagePublic() {
     >
       <div className="w-full max-w-[448px] h-full flex flex-col justify-center min-h-0">
         {/* Botão Voltar */}
-        <div className="flex-none mb-6">
+        <div className="flex-none mb-4">
           <button
             onClick={() => navigate('/link-page')}
             className="no-print inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all duration-fast hover:opacity-80 active:scale-95 rounded-input border"
@@ -158,7 +158,7 @@ export default function LinkPagePublic() {
       />
 
       {/* ── Cartão de visitas digital ── */}
-      <div className="flex-1 min-h-0 flex flex-col justify-center">
+      <div className="flex-1 min-h-0 flex flex-col justify-center mt-2">
         <article
           id="card-print-area"
           className="relative w-full rounded-modal border overflow-y-auto blueprint-corner"
