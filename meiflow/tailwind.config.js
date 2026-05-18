@@ -80,10 +80,25 @@ const config = {
           from: { opacity: '0', transform: 'translateY(16px)' },
           to: { opacity: '1', transform: 'translateY(0)' },
         },
+        'modal-sheet': {
+          from: { opacity: '0', transform: 'translateY(100%)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'modal-dialog': {
+          from: { opacity: '0', transform: 'scale(0.95) translateY(8px)' },
+          to: { opacity: '1', transform: 'scale(1) translateY(0)' },
+        },
+        'backdrop-in': {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 250ms ease-out',
         'slide-up': 'slide-up 400ms ease-in-out',
+        'modal-sheet': 'modal-sheet 340ms cubic-bezier(0.32, 0.72, 0, 1)',
+        'modal-dialog': 'modal-dialog 200ms cubic-bezier(0.16, 1, 0.3, 1)',
+        'backdrop-in': 'backdrop-in 200ms ease-out',
       },
     },
   },

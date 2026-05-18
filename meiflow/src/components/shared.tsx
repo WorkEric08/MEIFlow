@@ -1,11 +1,11 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { ArrowLeft } from 'lucide-react'
+import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAndroidBack } from '@/hooks/useAndroidBack'
 import { useScrollLock } from '@/hooks/useScrollLock'
 
-// ─── Modal (tela cheia) ──────────────────────────────────────────
+// ─── Modal — bottom sheet (mobile) / dialog centralizado (desktop) ──
 interface ModalProps {
   open: boolean
   onClose: () => void
@@ -15,7 +15,13 @@ interface ModalProps {
   className?: string
 }
 
-export function Modal({ open, onClose, title, children, className }: ModalProps) {
+const SIZE_CLS: Record<NonNullable<ModalProps['size']>, string> = {
+  sm: 'sm:max-w-sm',
+  md: 'sm:max-w-lg',
+  lg: 'sm:max-w-2xl',
+}
+
+export function Modal({ open, onClose, title, children, size = 'md', className }: ModalProps) {
   useAndroidBack(open, onClose)
   useScrollLock(open)
 
@@ -31,38 +37,69 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
   if (!open) return null
 
   return createPortal(
-    <div
-      className={cn('fixed inset-0 z-[9999] flex flex-col animate-slide-up', className)}
-      style={{
-        background: 'var(--bg-0)',
-        paddingTop: 'env(safe-area-inset-top)',
-      }}
-    >
-      {/* Header */}
-      <div
-        className="flex items-center gap-2 px-2 py-2 border-b shrink-0"
-        style={{ borderColor: 'var(--border)', background: 'var(--bg-1)' }}
-      >
-        <button
-          onClick={onClose}
-          aria-label="Voltar"
-          className="p-2 rounded-input transition-all hover:opacity-70 min-h-[40px] min-w-[40px] flex items-center justify-center"
-          style={{ color: 'var(--text-secondary)' }}
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <h2 className="font-semibold text-base" style={{ color: 'var(--text-primary)' }}>{title}</h2>
-      </div>
+    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center sm:justify-center">
 
-      {/* Conteúdo */}
+      {/* Backdrop — blur + escurecimento */}
       <div
-        className="flex-1 overflow-y-auto px-4 py-4 modal-scroll"
+        className="absolute inset-0 animate-backdrop-in"
+        onClick={onClose}
         style={{
-          paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
-          overscrollBehavior: 'contain',
+          background: 'rgba(0, 0, 0, 0.52)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
         }}
+      />
+
+      {/* Painel */}
+      <div
+        className={cn(
+          'relative z-10 w-full flex flex-col',
+          // Mobile: bottom sheet
+          'max-h-[92dvh] rounded-t-[22px] animate-modal-sheet',
+          // Desktop: dialog centralizado
+          'sm:rounded-2xl sm:animate-modal-dialog sm:max-h-[88dvh] sm:mb-0',
+          SIZE_CLS[size],
+          className,
+        )}
+        style={{ background: 'var(--bg-1)' }}
+        onClick={(e) => e.stopPropagation()}
       >
-        {children}
+        {/* Handle bar — apenas mobile */}
+        <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
+          <div
+            className="w-10 h-1 rounded-full"
+            style={{ background: 'var(--text-tertiary)', opacity: 0.35 }}
+          />
+        </div>
+
+        {/* Header */}
+        <div
+          className="flex items-center justify-between px-5 py-4 border-b shrink-0"
+          style={{ borderColor: 'var(--border)' }}
+        >
+          <h2 className="font-semibold text-base" style={{ color: 'var(--text-primary)' }}>
+            {title}
+          </h2>
+          <button
+            onClick={onClose}
+            aria-label="Fechar"
+            className="p-2 -mr-2 rounded-input transition-all hover:opacity-70 flex items-center justify-center"
+            style={{ color: 'var(--text-tertiary)' }}
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Conteúdo */}
+        <div
+          className="flex-1 overflow-y-auto px-5 py-4 modal-scroll"
+          style={{
+            paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))',
+            overscrollBehavior: 'contain',
+          }}
+        >
+          {children}
+        </div>
       </div>
     </div>,
     document.body
