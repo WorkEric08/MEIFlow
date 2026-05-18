@@ -62,8 +62,10 @@ export default function ProjectModal({ open, onClose, editing, defaultClientId }
     <>
       {dialog}
       <Modal open={open} onClose={handleClose} title={editing ? 'Editar projeto' : 'Novo projeto'}>
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-2.5">
+
+        {/* Cliente + Status — 2 colunas em qualquer tamanho */}
+        <div className="grid grid-cols-2 gap-2.5">
           <Field label="Cliente *" error={errors.clientId?.message}>
             <Controller name="clientId" control={control} render={({ field }) => (
               <CustomSelect
@@ -88,6 +90,7 @@ export default function ProjectModal({ open, onClose, editing, defaultClientId }
           </Field>
         </div>
 
+        {/* Nome — largura total */}
         <Field label="Nome do projeto *" error={errors.name?.message}>
           <Controller name="name" control={control} render={({ field }) => (
             <input
@@ -99,7 +102,8 @@ export default function ProjectModal({ open, onClose, editing, defaultClientId }
           )} />
         </Field>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Valor + Início: 2 colunas mobile / Entrega na mesma linha no desktop */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
           <Field label="Valor (R$) *" error={errors.value?.message}>
             <Controller name="value" control={control} render={({ field }) => (
               <CurrencyInput
@@ -120,30 +124,34 @@ export default function ProjectModal({ open, onClose, editing, defaultClientId }
               />
             )} />
           </Field>
-          <Field label="Entrega">
-            <Controller name="endDate" control={control} render={({ field }) => (
-              <DateInput
-                value={field.value ?? ''}
-                onChange={field.onChange}
-                onBlur={field.onBlur}
-              />
-            )} />
-          </Field>
+          {/* Entrega: ocupa linha inteira no mobile, 3ª coluna no desktop */}
+          <div className="col-span-2 sm:col-span-1">
+            <Field label="Entrega (opcional)">
+              <Controller name="endDate" control={control} render={({ field }) => (
+                <DateInput
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                />
+              )} />
+            </Field>
+          </div>
         </div>
 
+        {/* Descrição — compacta */}
         <Field label="Descrição" error={errors.description?.message}>
           <Controller name="description" control={control} render={({ field }) => (
             <textarea
               {...field}
               placeholder="Escopo do projeto…"
-              rows={2}
+              rows={1}
               className={inputBase + ' resize-none'}
               style={inputStyle(!!errors.description)}
             />
           )} />
         </Field>
 
-        <div className="flex justify-end gap-2 pt-2">
+        <div className="flex justify-end gap-2 pt-1">
           <button type="button" onClick={handleClose}
             className="px-4 py-2 rounded-input text-sm border transition-all hover:opacity-80"
             style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
