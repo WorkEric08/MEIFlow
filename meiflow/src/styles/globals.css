@@ -92,15 +92,6 @@ body {
   background-size: 20px 20px;
 }
 
-/* ─── Blueprint corner bracket ─── */
-.blueprint-corner::before,
-.blueprint-corner::after {
-  content: '';
-  position: absolute;
-  background: var(--blueprint);
-}
-.blueprint-corner::before { top: 0; left: 0; width: 12px; height: 1px; }
-.blueprint-corner::after  { top: 0; left: 0; width: 1px; height: 12px; }
 
 /* ─── Scrollbar (Webkit/Blink) — fina, azul escuro do projeto ─── */
 * {
