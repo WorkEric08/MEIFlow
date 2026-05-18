@@ -18,7 +18,9 @@
       "Bash(Remove-Item \"C:\\\\Users\\\\Pichau\\\\Desktop\\\\meiflow-setup\\\\meiflow\\\\src\\\\store\\\\plan.ts\" -Force)",
       "Bash(Remove-Item \"C:\\\\Users\\\\Pichau\\\\Desktop\\\\meiflow-setup\\\\meiflow\\\\src\\\\components\\\\UpgradeModal.tsx\" -Force)",
       "Bash(Remove-Item \"C:\\\\Users\\\\Pichau\\\\Desktop\\\\meiflow-setup\\\\meiflow\\\\src\\\\hooks\\\\usePlanGate.ts\" -Force)",
-      "Bash(Write-Output \"deleted\")"
+      "Bash(Write-Output \"deleted\")",
+      "Bash(Get-ChildItem -Recurse -ErrorAction SilentlyContinue)",
+      "Bash(Select-Object FullName)"
     ]
   }
 }

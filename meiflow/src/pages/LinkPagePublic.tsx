@@ -1,6 +1,7 @@
-import { useParams } from 'react-router-dom'
+import { useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { ExternalLink, MapPin, Phone, Mail, Globe } from 'lucide-react'
+import { ExternalLink, MapPin, Phone, Mail, Globe, ArrowLeft, Share2, Download } from 'lucide-react'
 import { linkPageService } from '@/features/link-page/service'
 
 // ── Tokens de tema do cartão público (espelham globals.css, escopados ao cartão) ──
@@ -63,6 +64,8 @@ function buildContactItems(page: {
 
 export default function LinkPagePublic() {
   const { username } = useParams<{ username: string }>()
+  const navigate = useNavigate()
+  const [copied, setCopied] = useState(false)
 
   const { data: page, isLoading } = useQuery({
     queryKey: ['link-page-public', username],
@@ -97,14 +100,29 @@ export default function LinkPagePublic() {
   const accent = page.accentColor
   const contacts = buildContactItems(page)
 
-  async function handleLinkClick(linkId: string, url: string) {
-    await linkPageService.incrementClick(linkId)
-    window.open(url, '_blank', 'noopener,noreferrer')
+  function handleLinkClick(linkId: string) {
+    linkPageService.incrementClick(linkId)
+  }
+
+  async function handleShare() {
+    const url = `${window.location.origin}/${page!.username}`
+    if (navigator.share) {
+      try { await navigator.share({ title: page!.displayName, url }) } catch { /* cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  function handleDownloadPDF() {
+    window.print()
   }
 
   return (
     <div
       className="min-h-dvh flex items-start sm:items-center justify-center py-10 sm:py-12 px-4 relative overflow-hidden"
+      id="link-page-root"
       style={{
         background: t.bg0,
         // Variáveis CSS escopadas a esta página — fazem as utilities .blueprint-grid
@@ -114,6 +132,16 @@ export default function LinkPagePublic() {
         ['--blueprint' as string]: accent,
       }}
     >
+      {/* Botão Voltar */}
+      <button
+        onClick={() => navigate(-1)}
+        className="no-print fixed top-4 left-4 z-50 flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all duration-fast hover:opacity-80 active:scale-95 rounded-input border"
+        style={{ background: t.bg1, borderColor: t.blueprintBorder, color: t.textSecondary, boxShadow: t.cardShadow }}
+      >
+        <ArrowLeft size={14} />
+        Voltar
+      </button>
+
       {/* Grid blueprint suave no fundo da página */}
       <div
         className="absolute inset-0 pointer-events-none opacity-50"
@@ -128,6 +156,7 @@ export default function LinkPagePublic() {
 
       {/* ── Cartão de visitas digital ── */}
       <article
+        id="card-print-area"
         className="relative w-full max-w-[448px] rounded-modal border overflow-hidden blueprint-corner"
         style={{
           background: t.bg1,
@@ -250,10 +279,13 @@ export default function LinkPagePublic() {
 
               <div className="flex flex-col gap-2.5">
                 {page.links.map((link) => (
-                  <button
+                  <a
                     key={link.id}
-                    onClick={() => handleLinkClick(link.id, link.url)}
-                    className="group w-full flex items-center justify-between px-4 py-3 rounded-input border text-left font-semibold transition-all duration-fast active:scale-[0.98]"
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => handleLinkClick(link.id)}
+                    className="group w-full flex items-center justify-between px-4 py-3 rounded-input border font-semibold transition-all duration-fast active:scale-[0.98] no-underline"
                     style={{
                       background: t.bg2,
                       borderColor: t.blueprintBorder,
@@ -268,7 +300,7 @@ export default function LinkPagePublic() {
                   >
                     <span className="text-sm truncate">{link.label}</span>
                     <ExternalLink size={14} style={{ color: accent, flexShrink: 0 }} />
-                  </button>
+                  </a>
                 ))}
               </div>
             </>
@@ -285,6 +317,27 @@ export default function LinkPagePublic() {
             >
               meiflow.com/{page.username}
             </span>
+
+            <div className="no-print flex items-center gap-2 shrink-0">
+              <button
+                onClick={handleShare}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-input border text-xs font-medium transition-all duration-fast hover:opacity-80 active:scale-95"
+                style={{ background: t.bg2, borderColor: t.blueprintBorder, color: t.textSecondary }}
+                title="Compartilhar link"
+              >
+                <Share2 size={12} />
+                {copied ? 'Copiado!' : 'Compartilhar'}
+              </button>
+              <button
+                onClick={handleDownloadPDF}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-input border text-xs font-medium transition-all duration-fast hover:opacity-80 active:scale-95"
+                style={{ background: t.bg2, borderColor: t.blueprintBorder, color: t.textSecondary }}
+                title="Baixar como PDF"
+              >
+                <Download size={12} />
+                PDF
+              </button>
+            </div>
           </div>
         </div>
       </article>
