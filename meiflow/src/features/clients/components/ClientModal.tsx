@@ -46,33 +46,22 @@ export default function ClientModal({ open, onClose, editing }: Props) {
       {dialog}
       <Modal open={open} onClose={handleClose} title={editing ? 'Editar cliente' : 'Novo cliente'}>
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-2.5">
-
-        {/* Identidade — quem é o cliente */}
-        <div className="grid grid-cols-2 gap-2.5">
-          <Field label="Nome *" error={errors.name?.message}>
-            <input {...register('name')} placeholder="Nome completo" className={inputCls(!!errors.name)} style={inputStyle(!!errors.name)} />
-          </Field>
-          <Field label="Empresa" error={errors.company?.message}>
-            <input {...register('company')} placeholder="Nome da empresa" className={inputCls()} style={inputStyle()} />
-          </Field>
-        </div>
-
-        {/* Contato — como alcançar */}
-        <div className="grid grid-cols-2 gap-2.5">
-          <Field label="E-mail *" error={errors.email?.message}>
-            <input {...register('email')} type="email" placeholder="email@exemplo.com" className={inputCls(!!errors.email)} style={inputStyle(!!errors.email)} />
-          </Field>
-          <Field label="Telefone" error={errors.phone?.message}>
-            <input {...register('phone')} placeholder="(47) 99999-9999" className={inputCls()} style={inputStyle()} />
-          </Field>
-        </div>
-
-        {/* Observações — largura total */}
+        <Field label="Nome *" error={errors.name?.message}>
+          <input {...register('name')} placeholder="Nome completo" className={inputCls(!!errors.name)} style={inputStyle(!!errors.name)} />
+        </Field>
+        <Field label="Nome da empresa (Opcional)" error={errors.company?.message}>
+          <input {...register('company')} placeholder="Nome da empresa" className={inputCls()} style={inputStyle()} />
+        </Field>
+        <Field label="E-mail *" error={errors.email?.message}>
+          <input {...register('email')} type="email" placeholder="email@exemplo.com" className={inputCls(!!errors.email)} style={inputStyle(!!errors.email)} />
+        </Field>
+        <Field label="Telefone" error={errors.phone?.message}>
+          <input {...register('phone')} placeholder="(00) 0 00000000" inputMode="tel" className={inputCls()} style={inputStyle()} />
+        </Field>
         <Field label="Observações" error={errors.notes?.message}>
           <textarea {...register('notes')} placeholder="Anotações sobre o cliente…" rows={1}
             className={inputCls() + ' resize-none'} style={inputStyle()} />
         </Field>
-
         <div className="flex justify-end gap-2 pt-1">
           <button type="button" onClick={handleClose}
             className="px-4 py-2 rounded-input text-sm border transition-all hover:opacity-80"
