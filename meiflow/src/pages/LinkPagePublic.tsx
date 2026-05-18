@@ -88,13 +88,23 @@ export default function LinkPagePublic() {
 
   // ── Blocos reutilizados nos dois layouts ─────────────────────────
 
+  const avatarSize = isHorizontal ? 'w-12 h-12 sm:w-14 sm:h-14' : 'w-14 h-14 sm:w-[72px] sm:h-[72px]'
+  const avatarTextSize = isHorizontal ? 'text-lg sm:text-xl' : 'text-xl sm:text-2xl'
+
   const AvatarIdentity = (
     <div className={`flex items-center gap-3 sm:gap-4 ${isHorizontal ? 'mb-3 sm:mb-4' : 'mb-4 sm:mb-5'}`}>
       <div
-        className={`${isHorizontal ? 'w-12 h-12 sm:w-14 sm:h-14 text-lg sm:text-xl' : 'w-14 h-14 sm:w-[72px] sm:h-[72px] text-xl sm:text-2xl'} rounded-full flex items-center justify-center font-black shrink-0`}
-        style={{ background: accent, color: '#fff', boxShadow: `0 0 0 4px ${t.bg1}, 0 0 0 5px ${t.blueprintBorder}` }}
+        className={`${avatarSize} rounded-full shrink-0 overflow-hidden`}
+        style={{ boxShadow: `0 0 0 4px ${t.bg1}, 0 0 0 5px ${t.blueprintBorder}` }}
       >
-        {page.displayName.charAt(0).toUpperCase()}
+        {page.avatarUrl ? (
+          <img src={page.avatarUrl} alt={page.displayName} className="w-full h-full object-cover" />
+        ) : (
+          <div className={`w-full h-full flex items-center justify-center font-black ${avatarTextSize}`}
+            style={{ background: accent, color: '#fff' }}>
+            {page.displayName.charAt(0).toUpperCase()}
+          </div>
+        )}
       </div>
       <div className="min-w-0 flex-1 pt-1">
         <h1 className="font-extrabold leading-tight break-words" style={{ color: t.textPrimary, fontSize: isHorizontal ? '18px' : '22px', letterSpacing: '-0.02em' }}>

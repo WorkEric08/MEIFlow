@@ -43,10 +43,17 @@ export default function LinkPagePreview({ page }: Props) {
   const IdentityBlock = (
     <div className="flex items-center gap-2.5 mb-2.5">
       <div
-        className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-black shrink-0"
-        style={{ background: accent, color: '#fff', boxShadow: `0 0 0 2px ${t.bg1}, 0 0 0 3px ${t.blueprintBorder}` }}
+        className="w-10 h-10 rounded-full shrink-0 overflow-hidden"
+        style={{ boxShadow: `0 0 0 2px ${t.bg1}, 0 0 0 3px ${t.blueprintBorder}` }}
       >
-        {(page.displayName || '?').charAt(0).toUpperCase()}
+        {page.avatarUrl ? (
+          <img src={page.avatarUrl} alt={page.displayName} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-sm font-black"
+            style={{ background: accent, color: '#fff' }}>
+            {(page.displayName || '?').charAt(0).toUpperCase()}
+          </div>
+        )}
       </div>
       <div className="min-w-0 flex-1">
         <h2 className="font-extrabold leading-tight truncate" style={{ color: t.textPrimary, fontSize: '12px', letterSpacing: '-0.02em' }}>

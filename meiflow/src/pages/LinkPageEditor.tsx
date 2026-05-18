@@ -10,6 +10,7 @@ import LinkCard from '@/features/link-page/components/LinkCard'
 import AddLinkForm from '@/features/link-page/components/AddLinkForm'
 import AccentColorPicker from '@/features/link-page/components/AccentColorPicker'
 import LinkPagePreview from '@/features/link-page/components/LinkPagePreview'
+import { useProfileStore } from '@/store/profile'
 import type { LinkPageFormValues } from '@/features/link-page/types'
 
 function formatPhone(value: string): string {
@@ -49,6 +50,17 @@ export default function LinkPageEditor() {
   const { data: page, isLoading } = useLinkPage()
   const upsert = useUpsertLinkPage()
   const reorderLinks = useReorderLinks()
+  const { profile } = useProfileStore()
+
+  // Sincroniza a foto do perfil de Configurações → avatarUrl do cartão automaticamente
+  useEffect(() => {
+    if (!page) return
+    const incoming = profile.photo ?? ''
+    const current  = page.avatarUrl ?? ''
+    if (incoming !== current) {
+      linkPageService.upsert({ avatarUrl: incoming || undefined })
+    }
+  }, [profile.photo, page?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const { register, handleSubmit, watch, setValue, reset, formState: { errors, isDirty } } =
     useForm<LinkPageFormValues>({
