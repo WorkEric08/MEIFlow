@@ -188,12 +188,30 @@ export default function LinkPagePublic() {
         {/* Coluna direita: links */}
         {showLinks && page.links.length > 0 && (
           <>
-            {/* Divisor vertical (sm+) / horizontal (mobile) */}
             <div className="hidden sm:block w-px self-stretch shrink-0" style={{ background: t.blueprintBorder }} />
-            <div className="sm:border-t-0 border-t p-5 sm:p-6 pt-4 sm:pt-8 sm:w-[220px] sm:shrink-0"
-              style={{ borderColor: t.blueprintBorder }}>
+            <div
+              className="border-t sm:border-t-0 p-5 sm:p-6 pt-4 sm:pt-8 sm:w-[220px] sm:shrink-0"
+              style={{ borderColor: t.blueprintBorder }}
+            >
               <Separator color={t.blueprintBorder} label="LINKS" labelColor={t.textTertiary} bg={t.bg1} />
-              <div className="mt-1">{LinksList}</div>
+              <div className="flex flex-col gap-2 sm:gap-2.5 mt-1">
+                {page.links.map((link) => (
+                  <a
+                    key={link.id}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => handleLinkClick(link.id)}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-input border font-semibold transition-all duration-fast active:scale-[0.98] no-underline"
+                    style={{ background: t.bg2, borderColor: t.blueprintBorder, color: t.textPrimary }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = accent }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = t.blueprintBorder }}
+                  >
+                    <span className="text-sm truncate">{link.label}</span>
+                    <ExternalLink size={14} style={{ color: accent, flexShrink: 0 }} />
+                  </a>
+                ))}
+              </div>
             </div>
           </>
         )}
