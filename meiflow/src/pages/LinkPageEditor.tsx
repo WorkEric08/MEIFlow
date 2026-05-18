@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link2, Sun, Moon, ExternalLink, LayoutList, Columns2, Eye, EyeOff } from 'lucide-react'
@@ -44,6 +45,7 @@ function Field({ label, error, children }: { label: string; error?: string; chil
 }
 
 export default function LinkPageEditor() {
+  const navigate = useNavigate()
   const { data: page, isLoading } = useLinkPage()
   const upsert = useUpsertLinkPage()
   const reorderLinks = useReorderLinks()
@@ -130,11 +132,12 @@ export default function LinkPageEditor() {
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Seu cartão digital público de contato e links</p>
         </div>
         {page && (
-          <a href={`/${page.username}`} target="_blank" rel="noopener noreferrer"
+          <button
+            onClick={() => navigate(`/${page.username}`)}
             className="flex items-center gap-2 px-4 py-2 rounded-input border text-sm font-medium transition-all duration-fast hover:opacity-80"
             style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
             <ExternalLink size={14} /> Ver página
-          </a>
+          </button>
         )}
       </div>
 
