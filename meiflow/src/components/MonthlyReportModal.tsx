@@ -122,7 +122,7 @@ export default function MonthlyReportModal({ open, onClose }: Props) {
               className="font-bold text-lg sm:text-xl leading-tight mt-0.5"
               style={{ color: 'var(--text-primary)' }}
             >
-              {MONTHS[month]} <span style={{ color: 'var(--text-secondary)' }}>de</span> {year}
+              {MONTHS[month]} de {year}
             </h2>
             <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
               {monthPayments.length} pagamento{monthPayments.length !== 1 ? 's' : ''} ·{' '}
@@ -134,7 +134,7 @@ export default function MonthlyReportModal({ open, onClose }: Props) {
         <div className="p-4 sm:p-5">
           {/* ── Métricas — 3 cards lado a lado em qualquer tamanho.
               Texto e números usam clamp() para escalar sem quebra de linha. ── */}
-          <div className="grid grid-cols-3 gap-1.5 sm:gap-3 mb-5">
+          <div className="flex flex-col gap-2.5 mb-5">
             {[
               {
                 label: 'Recebido',
@@ -160,30 +160,26 @@ export default function MonthlyReportModal({ open, onClose }: Props) {
             ].map(({ label, value, count, color, bg }) => (
               <div
                 key={label}
-                className="p-2 sm:p-3.5 rounded-card border flex flex-col gap-1 sm:gap-2 min-w-0 overflow-hidden"
+                className="w-full px-4 py-3.5 rounded-card border flex items-center justify-between gap-4"
                 style={{ background: 'var(--bg-1)', borderColor: 'var(--border)' }}
               >
-                <div className="flex items-center justify-between gap-1 min-w-0">
+                <div className="flex items-center gap-3 min-w-0">
                   <span
-                    className="inline-flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-badge font-bold uppercase tracking-wider sm:tracking-widest min-w-0 whitespace-nowrap"
-                    style={{ background: bg, color, fontSize: 'clamp(8px, 2.1vw, 10px)' }}
+                    className="inline-flex items-center px-2.5 py-1 rounded-badge text-xs font-bold uppercase tracking-widest shrink-0"
+                    style={{ background: bg, color }}
                   >
                     {label}
                   </span>
                   <span
-                    className="font-mono tabular-nums shrink-0 whitespace-nowrap"
-                    style={{ color: 'var(--text-tertiary)', fontSize: 'clamp(9px, 2.2vw, 11px)' }}
+                    className="text-xs tabular-nums"
+                    style={{ color: 'var(--text-tertiary)' }}
                   >
-                    {count}
+                    {count} pagamento{count !== 1 ? 's' : ''}
                   </span>
                 </div>
                 <p
-                  className="font-mono font-bold tabular-nums leading-tight whitespace-nowrap overflow-hidden"
-                  style={{
-                    color: 'var(--text-primary)',
-                    fontSize: 'clamp(11px, 3.6vw, 20px)',
-                    textOverflow: 'clip',
-                  }}
+                  className="font-bold tabular-nums shrink-0 text-lg"
+                  style={{ color: 'var(--text-primary)' }}
                 >
                   {formatCurrency(value)}
                 </p>
