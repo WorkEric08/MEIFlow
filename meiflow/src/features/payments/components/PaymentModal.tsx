@@ -65,7 +65,7 @@ export default function PaymentModal({ open, onClose, editing }: Props) {
       <Modal open={open} onClose={handleClose} title={editing ? 'Editar pagamento' : 'Novo pagamento'}>
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-2.5">
 
-        {/* Cliente + Projeto — 2 colunas */}
+        {/* Cliente | Status — 2 colunas */}
         <div className="grid grid-cols-2 gap-2.5">
           <Field label="Cliente *" error={errors.clientId?.message}>
             <Controller name="clientId" control={control} render={({ field }) => (
@@ -79,19 +79,31 @@ export default function PaymentModal({ open, onClose, editing }: Props) {
               />
             )} />
           </Field>
-          <Field label="Projeto *" error={errors.projectId?.message}>
-            <Controller name="projectId" control={control} render={({ field }) => (
+          <Field label="Status">
+            <Controller name="status" control={control} render={({ field }) => (
               <CustomSelect
-                options={filteredProjects.map((p) => ({ value: p.id, label: p.name }))}
-                placeholder="Selecione…"
+                options={STATUS_OPTIONS}
                 value={field.value}
                 onChange={field.onChange}
                 onBlur={field.onBlur}
-                error={!!errors.projectId}
               />
             )} />
           </Field>
         </div>
+
+        {/* Projeto — largura total */}
+        <Field label="Projeto *" error={errors.projectId?.message}>
+          <Controller name="projectId" control={control} render={({ field }) => (
+            <CustomSelect
+              options={filteredProjects.map((p) => ({ value: p.id, label: p.name }))}
+              placeholder="Selecione…"
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              error={!!errors.projectId}
+            />
+          )} />
+        </Field>
 
         {/* Descrição — largura total */}
         <Field label="Descrição *" error={errors.description?.message}>
@@ -105,7 +117,7 @@ export default function PaymentModal({ open, onClose, editing }: Props) {
           )} />
         </Field>
 
-        {/* Valor + Vencimento — 2 colunas */}
+        {/* Valor | Vencimento — 2 colunas */}
         <div className="grid grid-cols-2 gap-2.5">
           <Field label="Valor (R$) *" error={errors.amount?.message}>
             <Controller name="amount" control={control} render={({ field }) => (
@@ -128,18 +140,6 @@ export default function PaymentModal({ open, onClose, editing }: Props) {
             )} />
           </Field>
         </div>
-
-        {/* Status — largura total */}
-        <Field label="Status">
-          <Controller name="status" control={control} render={({ field }) => (
-            <CustomSelect
-              options={STATUS_OPTIONS}
-              value={field.value}
-              onChange={field.onChange}
-              onBlur={field.onBlur}
-            />
-          )} />
-        </Field>
 
         <div className="flex justify-end gap-2 pt-1">
           <button type="button" onClick={handleClose}
