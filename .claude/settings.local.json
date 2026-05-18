@@ -21,7 +21,9 @@
       "Bash(Write-Output \"deleted\")",
       "Bash(Get-ChildItem -Recurse -ErrorAction SilentlyContinue)",
       "Bash(Select-Object FullName)",
-      "Bash(Get-ChildItem -Path . -Name)"
+      "Bash(Get-ChildItem -Path . -Name)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }
