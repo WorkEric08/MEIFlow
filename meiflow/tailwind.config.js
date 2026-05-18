@@ -44,7 +44,7 @@ const config = {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['Fira Code', 'monospace'],
+        mono: ['IBM Plex Mono', 'monospace'],
       },
       fontSize: {
         'display': ['32px', { lineHeight: '1.15', fontWeight: '800', letterSpacing: '-0.02em' }],
