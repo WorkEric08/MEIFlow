@@ -121,7 +121,7 @@ export default function LinkPagePublic() {
 
   return (
     <div
-      className="min-h-dvh flex items-start sm:items-center justify-center py-10 sm:py-12 px-4 relative overflow-hidden"
+      className="h-dvh flex flex-col items-center justify-center px-4 py-6 relative overflow-hidden"
       id="link-page-root"
       style={{
         background: t.bg0,
@@ -132,15 +132,18 @@ export default function LinkPagePublic() {
         ['--blueprint' as string]: accent,
       }}
     >
-      {/* Botão Voltar */}
-      <button
-        onClick={() => navigate('/link-page')}
-        className="no-print fixed top-4 left-4 z-50 flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all duration-fast hover:opacity-80 active:scale-95 rounded-input border"
-        style={{ background: t.bg1, borderColor: t.blueprintBorder, color: t.textSecondary, boxShadow: t.cardShadow }}
-      >
-        <ArrowLeft size={14} />
-        Voltar
-      </button>
+      <div className="w-full max-w-[448px] h-full flex flex-col justify-center min-h-0">
+        {/* Botão Voltar */}
+        <div className="flex-none mb-6">
+          <button
+            onClick={() => navigate('/link-page')}
+            className="no-print inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all duration-fast hover:opacity-80 active:scale-95 rounded-input border"
+            style={{ background: t.bg1, borderColor: t.blueprintBorder, color: t.textSecondary, boxShadow: t.cardShadow }}
+          >
+            <ArrowLeft size={14} />
+            Voltar
+          </button>
+        </div>
 
       {/* Grid blueprint suave no fundo da página */}
       <div
@@ -155,15 +158,19 @@ export default function LinkPagePublic() {
       />
 
       {/* ── Cartão de visitas digital ── */}
-      <article
-        id="card-print-area"
-        className="relative w-full max-w-[448px] rounded-modal border overflow-hidden blueprint-corner"
-        style={{
-          background: t.bg1,
-          borderColor: t.blueprintBorder,
-          boxShadow: t.cardShadow,
-        }}
-      >
+      <div className="flex-1 min-h-0 flex flex-col justify-center">
+        <article
+          id="card-print-area"
+          className="relative w-full rounded-modal border overflow-y-auto blueprint-corner"
+          style={{
+            background: t.bg1,
+            borderColor: t.blueprintBorder,
+            boxShadow: t.cardShadow,
+            maxHeight: '100%',
+            msOverflowStyle: 'none',
+            scrollbarWidth: 'none',
+          }}
+        >
         {/* Background grid blueprint do cartão */}
         <div className="blueprint-grid absolute inset-0 pointer-events-none" />
 
@@ -175,11 +182,11 @@ export default function LinkPagePublic() {
           ID · {page.username}
         </div>
 
-        <div className="relative p-6">
+        <div className="relative p-4 sm:p-6">
           {/* ── Avatar + identidade ── */}
-          <div className="flex items-center gap-4 mb-5">
+          <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-5">
             <div
-              className="w-[72px] h-[72px] rounded-full flex items-center justify-center text-2xl font-black shrink-0"
+              className="w-14 h-14 sm:w-[72px] sm:h-[72px] rounded-full flex items-center justify-center text-xl sm:text-2xl font-black shrink-0"
               style={{
                 background: accent,
                 color: '#fff',
@@ -216,7 +223,7 @@ export default function LinkPagePublic() {
 
           {page.bio && (
             <p
-              className="text-sm leading-relaxed mb-5 break-words"
+              className="text-sm leading-relaxed mb-4 sm:mb-5 break-words"
               style={{ color: t.textSecondary }}
             >
               {page.bio}
@@ -228,7 +235,7 @@ export default function LinkPagePublic() {
             <>
               <Separator color={t.blueprintBorder} label="CONTATO" labelColor={t.textTertiary} bg={t.bg1} />
 
-              <ul className="flex flex-col gap-2.5 mb-5">
+              <ul className="flex flex-col gap-2 sm:gap-2.5 mb-4 sm:mb-5">
                 {contacts.map(({ key, label, href }) => {
                   const Icon = CONTACT_ICONS[key]
                   const content = (
@@ -277,7 +284,7 @@ export default function LinkPagePublic() {
             <>
               <Separator color={t.blueprintBorder} label="LINKS" labelColor={t.textTertiary} bg={t.bg1} />
 
-              <div className="flex flex-col gap-2.5">
+              <div className="flex flex-col gap-2 sm:gap-2.5">
                 {page.links.map((link) => (
                   <a
                     key={link.id}
@@ -285,7 +292,7 @@ export default function LinkPagePublic() {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => handleLinkClick(link.id)}
-                    className="group w-full flex items-center justify-between px-4 py-3 rounded-input border font-semibold transition-all duration-fast active:scale-[0.98] no-underline"
+                    className="group w-full flex items-center justify-between px-3 py-2.5 sm:px-4 sm:py-3 rounded-input border font-semibold transition-all duration-fast active:scale-[0.98] no-underline"
                     style={{
                       background: t.bg2,
                       borderColor: t.blueprintBorder,
@@ -308,7 +315,7 @@ export default function LinkPagePublic() {
 
           {/* ── Footer técnico ── */}
           <div
-            className="mt-6 pt-4 border-t flex items-center justify-between gap-3"
+            className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t flex items-center justify-between gap-3"
             style={{ borderColor: t.blueprintBorder }}
           >
             <span
@@ -317,30 +324,33 @@ export default function LinkPagePublic() {
             >
               meiflow.com/{page.username}
             </span>
-
-            <div className="no-print flex items-center gap-2 shrink-0">
-              <button
-                onClick={handleShare}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-input border text-xs font-medium transition-all duration-fast hover:opacity-80 active:scale-95"
-                style={{ background: t.bg2, borderColor: t.blueprintBorder, color: t.textSecondary }}
-                title="Compartilhar link"
-              >
-                <Share2 size={12} />
-                {copied ? 'Copiado!' : 'Compartilhar'}
-              </button>
-              <button
-                onClick={handleDownloadPDF}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-input border text-xs font-medium transition-all duration-fast hover:opacity-80 active:scale-95"
-                style={{ background: t.bg2, borderColor: t.blueprintBorder, color: t.textSecondary }}
-                title="Baixar como PDF"
-              >
-                <Download size={12} />
-                PDF
-              </button>
-            </div>
           </div>
         </div>
-      </article>
+        </article>
+      </div>
+
+      {/* ── Ações externas ── */}
+      <div className="flex-none mt-4 sm:mt-6 flex justify-end gap-2 w-full no-print">
+        <button
+          onClick={handleShare}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-input border text-sm font-medium transition-all duration-fast hover:opacity-80 active:scale-95"
+          style={{ background: t.bg1, borderColor: t.blueprintBorder, color: t.textSecondary, boxShadow: t.cardShadow }}
+          title="Compartilhar link"
+        >
+          <Share2 size={14} />
+          {copied ? 'Copiado!' : 'Compartilhar'}
+        </button>
+        <button
+          onClick={handleDownloadPDF}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-input border text-sm font-medium transition-all duration-fast hover:opacity-80 active:scale-95"
+          style={{ background: t.bg1, borderColor: t.blueprintBorder, color: t.textSecondary, boxShadow: t.cardShadow }}
+          title="Baixar como PDF"
+        >
+          <Download size={14} />
+          PDF
+        </button>
+      </div>
+      </div>
     </div>
   )
 }
@@ -358,7 +368,7 @@ function Separator({
   bg: string
 }) {
   return (
-    <div className="relative my-4">
+    <div className="relative my-3 sm:my-4">
       <div className="border-t" style={{ borderColor: color }} />
       <span
         className="absolute -top-[7px] left-0 px-2 font-mono text-[10px] font-semibold uppercase tracking-widest"
