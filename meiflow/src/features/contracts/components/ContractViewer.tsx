@@ -53,7 +53,7 @@ const DOCUMENT_STYLES = `
   #contract-print u { text-decoration: underline; }
   #contract-print blockquote { border-left: 3px solid #94A3B8; padding: 6px 0 6px 16px; margin: 14px 0; color: #475569; font-style: italic; }
   #contract-print a { color: #1A65C0; text-decoration: underline; }
-  #contract-print code { font-family: 'IBM Plex Mono', monospace; font-size: 12px; background: #f8fafc; padding: 1px 5px; border-radius: 3px; border: 1px solid #e2e8f0; }
+  #contract-print code { font-family: ui-monospace, 'Courier New', monospace; font-size: 12px; background: #f8fafc; padding: 1px 5px; border-radius: 3px; border: 1px solid #e2e8f0; }
   #contract-print hr { border: none; border-top: 1px solid #e5e7eb; margin: 24px 0; }
 `
 

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -349,7 +349,7 @@ html.modal-open nav.backdrop-blur {
 .tiptap-canvas strong { font-weight: 700; }
 .tiptap-canvas em { font-style: italic; }
 .tiptap-canvas a { color: #1A65C0; text-decoration: underline; }
-.tiptap-canvas code { font-family: 'IBM Plex Mono', monospace; font-size: 13px; background: #f1f5f9; padding: 1px 5px; border-radius: 3px; }
+.tiptap-canvas code { font-family: ui-monospace, 'Courier New', monospace; font-size: 13px; background: #f1f5f9; padding: 1px 5px; border-radius: 3px; }
 
 /* Placeholder do TipTap */
 .tiptap-canvas p.is-editor-empty:first-child::before {
