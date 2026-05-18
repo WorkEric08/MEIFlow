@@ -20,6 +20,13 @@ const FILTERS: { value: Filter; label: string }[] = [
   { value: 'accepted', label: 'Aceitos' },
 ]
 
+const STATUS_ACCENT: Record<ContractStatus, { border: string; iconBg: string; iconColor: string }> = {
+  draft:    { border: 'var(--border)',          iconBg: 'var(--bg-2)',              iconColor: 'var(--text-tertiary)' },
+  sent:     { border: 'var(--status-active)',   iconBg: 'var(--status-active-bg)',  iconColor: 'var(--status-active)' },
+  accepted: { border: 'var(--status-paid)',     iconBg: 'var(--status-paid-bg)',    iconColor: 'var(--status-paid)' },
+  rejected: { border: 'var(--status-overdue)',  iconBg: 'var(--status-overdue-bg)', iconColor: 'var(--status-overdue)' },
+}
+
 export default function ContractsPage() {
   const navigate = useNavigate()
   const { data: contracts = [], isLoading } = useContracts()
@@ -163,74 +170,111 @@ export default function ContractsPage() {
         <div className="flex flex-col gap-2.5">
           {filtered.map((c) => {
             const client = clients.find((cl) => cl.id === c.clientId)
+            const accent = STATUS_ACCENT[c.status]
             return (
-              <div key={c.id}
-                className="rounded-card border overflow-hidden"
-                style={{ background: 'var(--bg-1)', borderColor: 'var(--border)' }}>
+              <div
+                key={c.id}
+                className="rounded-card border overflow-hidden transition-all"
+                style={{
+                  background: 'var(--bg-1)',
+                  borderColor: 'var(--border)',
+                  borderLeft: `3px solid ${accent.border}`,
+                }}
+              >
+                {/* ── Área clicável principal ── */}
                 <button
                   onClick={() => setViewing(c)}
                   data-pwa-tap
-                  className="w-full flex items-start gap-3 px-4 pt-3.5 pb-3 text-left"
+                  className="w-full flex items-start gap-3 px-4 pt-4 pb-3.5 text-left hover:opacity-90 transition-opacity"
                 >
-                  <div className="w-10 h-10 rounded-input flex items-center justify-center shrink-0"
-                    style={{ background: 'var(--primary-subtle)', color: 'var(--primary)' }}>
-                    <FileText size={16} />
+                  <div
+                    className="w-9 h-9 rounded-input flex items-center justify-center shrink-0 mt-0.5"
+                    style={{ background: accent.iconBg, color: accent.iconColor }}
+                  >
+                    <FileText size={15} />
                   </div>
+
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <p className="text-sm font-semibold leading-snug break-words"
-                        style={{ color: 'var(--text-primary)' }}>
+                    {/* Título + badge */}
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <p className="text-sm font-semibold leading-snug" style={{ color: 'var(--text-primary)' }}>
                         {c.title}
                       </p>
                       <StatusBadge status={c.status} />
                     </div>
+
+                    {/* Cliente */}
                     {client && (
-                      <p className="text-xs truncate font-medium"
-                        style={{ color: 'var(--text-secondary)' }}>
+                      <p className="text-xs font-medium mb-1.5 truncate" style={{ color: 'var(--text-secondary)' }}>
                         {client.name}
                       </p>
                     )}
-                    <div className="flex items-center gap-1.5 mt-1 text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
-                      <Calendar size={11} />
-                      <span>
-                        Criado em {formatDate(c.createdAt)}
-                        {c.acceptedAt && ` · Aceito em ${formatDate(c.acceptedAt)}`}
+
+                    {/* Datas */}
+                    <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+                      <span className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
+                        <Calendar size={10} />
+                        Criado {formatDate(c.createdAt)}
                       </span>
+                      {c.sentAt && (
+                        <span className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--status-active)' }}>
+                          <Send size={10} />
+                          Enviado {formatDate(new Date(c.sentAt))}
+                        </span>
+                      )}
+                      {c.acceptedAt && (
+                        <span className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--status-paid)' }}>
+                          <Eye size={10} />
+                          Aceito {formatDate(new Date(c.acceptedAt))}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </button>
 
+                {/* ── Barra de ações ── */}
                 <div className="flex items-stretch border-t" style={{ borderColor: 'var(--border)' }}>
-                  <button onClick={() => setViewing(c)}
+                  <button
+                    onClick={() => setViewing(c)}
                     data-pwa-tap
                     className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all hover:opacity-70"
-                    style={{ color: 'var(--text-secondary)' }}>
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
                     <Eye size={13} /> Ver
                   </button>
+
                   {c.status !== 'accepted' && (
                     <>
                       <div className="w-px" style={{ background: 'var(--border)' }} />
-                      <button onClick={() => handleEdit(c)}
+                      <button
+                        onClick={() => handleEdit(c)}
                         data-pwa-tap
                         className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all hover:opacity-70"
-                        style={{ color: 'var(--text-secondary)' }}>
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
                         <Pencil size={13} /> Editar
                       </button>
                       <div className="w-px" style={{ background: 'var(--border)' }} />
-                      <button onClick={() => handleCopyLink(c)}
+                      <button
+                        onClick={() => handleCopyLink(c)}
                         data-pwa-tap
                         className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-all hover:opacity-70"
-                        style={{ color: 'var(--primary)' }}>
-                        <Send size={13} /> Enviar
+                        style={{ color: 'var(--primary)' }}
+                      >
+                        <Send size={13} />
+                        {c.status === 'draft' ? 'Enviar' : 'Copiar link'}
                       </button>
                     </>
                   )}
+
                   <div className="w-px" style={{ background: 'var(--border)' }} />
-                  <button onClick={() => setConfirmDelete(c)}
+                  <button
+                    onClick={() => setConfirmDelete(c)}
                     data-pwa-tap
                     aria-label="Remover"
                     className="px-4 flex items-center justify-center transition-all hover:opacity-70"
-                    style={{ color: 'var(--status-overdue)' }}>
+                    style={{ color: 'var(--status-overdue)' }}
+                  >
                     <Trash2 size={14} />
                   </button>
                 </div>

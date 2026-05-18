@@ -82,6 +82,7 @@ body {
   min-height: 100dvh;
   background-color: var(--bg-0);
   transition: background-color 250ms ease-out, color 250ms ease-out;
+  font-feature-settings: "zero" 0;
 }
 
 /* ─── Blueprint grid utility ─── */
@@ -309,7 +310,7 @@ html.modal-open nav.backdrop-blur {
   border-radius: 6px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.12);
   padding: 48px 56px;
-  min-height: calc(100vh - 220px);
+  min-height: 1086px;
 }
 
 .dark .paper-canvas {
