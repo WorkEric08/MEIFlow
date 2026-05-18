@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { AlertTriangle } from 'lucide-react'
 import { useScrollLock } from '@/hooks/useScrollLock'
+import { useDragToDismiss } from '@/hooks/useDragToDismiss'
 
 interface Props {
   open: boolean
@@ -23,6 +24,7 @@ export function ConfirmModal({
   onCancel,
 }: Props) {
   useScrollLock(open)
+  const { panelRef, backdropRef, dragHandleProps } = useDragToDismiss(onCancel)
 
   useEffect(() => {
     if (!open) return
@@ -40,6 +42,7 @@ export function ConfirmModal({
 
       {/* Backdrop */}
       <div
+        ref={backdropRef}
         className="absolute inset-0 animate-backdrop-in"
         onClick={onCancel}
         style={{
@@ -51,12 +54,16 @@ export function ConfirmModal({
 
       {/* Painel compacto */}
       <div
+        ref={panelRef}
         className="relative z-10 w-full sm:max-w-sm rounded-t-[22px] sm:rounded-2xl animate-modal-sheet sm:animate-modal-dialog"
         style={{ background: 'var(--bg-1)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Handle bar — mobile */}
-        <div className="sm:hidden flex justify-center pt-3 pb-1">
+        {/* Handle bar — drag-to-dismiss (mobile) */}
+        <div
+          className="sm:hidden flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing touch-none"
+          {...dragHandleProps}
+        >
           <div
             className="w-10 h-1 rounded-full"
             style={{ background: 'var(--text-tertiary)', opacity: 0.35 }}

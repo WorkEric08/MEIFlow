@@ -4,6 +4,7 @@ import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAndroidBack } from '@/hooks/useAndroidBack'
 import { useScrollLock } from '@/hooks/useScrollLock'
+import { useDragToDismiss } from '@/hooks/useDragToDismiss'
 
 // ─── Modal — bottom sheet (mobile) / dialog centralizado (desktop) ──
 interface ModalProps {
@@ -24,6 +25,7 @@ const SIZE_CLS: Record<NonNullable<ModalProps['size']>, string> = {
 export function Modal({ open, onClose, title, children, size = 'md', className }: ModalProps) {
   useAndroidBack(open, onClose)
   useScrollLock(open)
+  const { panelRef, backdropRef, dragHandleProps } = useDragToDismiss(onClose)
 
   useEffect(() => {
     if (!open) return
@@ -41,6 +43,7 @@ export function Modal({ open, onClose, title, children, size = 'md', className }
 
       {/* Backdrop — blur + escurecimento */}
       <div
+        ref={backdropRef}
         className="absolute inset-0 animate-backdrop-in"
         onClick={onClose}
         style={{
@@ -52,11 +55,10 @@ export function Modal({ open, onClose, title, children, size = 'md', className }
 
       {/* Painel */}
       <div
+        ref={panelRef}
         className={cn(
           'relative z-10 w-full flex flex-col',
-          // Mobile: bottom sheet
           'max-h-[92dvh] rounded-t-[22px] animate-modal-sheet',
-          // Desktop: dialog centralizado
           'sm:rounded-2xl sm:animate-modal-dialog sm:max-h-[88dvh] sm:mb-0',
           SIZE_CLS[size],
           className,
@@ -64,26 +66,31 @@ export function Modal({ open, onClose, title, children, size = 'md', className }
         style={{ background: 'var(--bg-1)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Handle bar — apenas mobile */}
-        <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
+        {/* Handle bar — drag-to-dismiss (mobile) */}
+        <div
+          className="sm:hidden flex justify-center pt-3 pb-1 shrink-0 cursor-grab active:cursor-grabbing touch-none"
+          {...dragHandleProps}
+        >
           <div
             className="w-10 h-1 rounded-full"
             style={{ background: 'var(--text-tertiary)', opacity: 0.35 }}
           />
         </div>
 
-        {/* Header */}
+        {/* Header — também arrasta no mobile */}
         <div
-          className="flex items-center justify-between px-5 py-4 border-b shrink-0"
+          className="flex items-center justify-between px-5 py-4 border-b shrink-0 sm:cursor-default cursor-grab active:cursor-grabbing touch-none"
           style={{ borderColor: 'var(--border)' }}
+          {...dragHandleProps}
         >
-          <h2 className="font-semibold text-base" style={{ color: 'var(--text-primary)' }}>
+          <h2 className="font-semibold text-base select-none" style={{ color: 'var(--text-primary)' }}>
             {title}
           </h2>
           <button
-            onClick={onClose}
+            onClick={(e) => { e.stopPropagation(); onClose() }}
+            onTouchStart={(e) => e.stopPropagation()}
             aria-label="Fechar"
-            className="p-2 -mr-2 rounded-input transition-all hover:opacity-70 flex items-center justify-center"
+            className="p-2 -mr-2 rounded-input transition-all hover:opacity-70 flex items-center justify-center touch-auto cursor-pointer"
             style={{ color: 'var(--text-tertiary)' }}
           >
             <X size={18} />
