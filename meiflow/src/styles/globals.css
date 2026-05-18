@@ -368,25 +368,21 @@ html.modal-open nav.backdrop-blur {
 
 /* ── Estilos de impressão — PDF do cartão de visitas ── */
 @media print {
-  .no-print { display: none !important; }
+  body * { visibility: hidden; }
 
-  #link-page-root {
-    padding: 0 !important;
-    min-height: unset !important;
-    background: white !important;
-    display: block !important;
-  }
-
-  #link-page-root > *:not(#card-print-area) {
-    display: none !important;
+  #card-print-area,
+  #card-print-area * {
+    visibility: visible;
   }
 
   #card-print-area {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    max-height: none !important;
+    overflow: visible !important;
     box-shadow: none !important;
     border-radius: 8px !important;
-    max-width: 480px !important;
-    width: 100% !important;
-    margin: 24px auto !important;
-    page-break-inside: avoid;
   }
 }
