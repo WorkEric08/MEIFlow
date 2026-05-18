@@ -319,12 +319,17 @@ html.modal-open nav.backdrop-blur {
 
 @media (max-width: 640px) {
   .paper-canvas {
-    padding: 24px 20px;
+    padding: 28px 20px;
     border-radius: 0;
     box-shadow: none;
-    min-height: 50vh;
+    min-height: 60vh;
+    border-top: 1px solid #e5e7eb;
   }
 }
+
+/* Esconde scrollbar mantendo scroll funcional */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
 
 .tiptap-canvas {
   outline: none;

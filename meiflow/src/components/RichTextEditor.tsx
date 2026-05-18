@@ -18,7 +18,6 @@ import { cn } from '@/lib/utils'
 export interface VariableOption {
   key: string
   label: string
-  /** Texto a inserir; se omitido, usa `{{key}}` para interpolar depois */
   value?: string
 }
 
@@ -27,25 +26,15 @@ interface Props {
   onChange: (html: string) => void
   variables?: VariableOption[]
   placeholder?: string
-  /** Limita a altura do canvas e ativa scroll interno (usado no modal) */
   bounded?: boolean
 }
 
-/**
- * Editor WYSIWYG estilo Word/Google Docs.
- * — Barra de ferramentas grande, com rótulos visíveis e ícones reconhecíveis.
- * — Atalhos: Ctrl+B/I/U para formatação básica, Ctrl+Z/Y para undo/redo.
- * — Variáveis: chip ao lado do conteúdo (cliente, projeto, etc.) inseridas como texto.
- */
 export default function RichTextEditor({
   value, onChange, variables = [], placeholder, bounded = false,
 }: Props) {
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({
-        // dropcursor padrão de StarterKit conflita em alguns navegadores; mantém defaults
-        heading: { levels: [1, 2, 3] },
-      }),
+      StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
       Underline,
       Link.configure({ openOnClick: false, HTMLAttributes: { rel: 'noopener noreferrer' } }),
       Placeholder.configure({ placeholder: placeholder ?? 'Comece a escrever seu contrato…' }),
@@ -60,7 +49,6 @@ export default function RichTextEditor({
     },
   })
 
-  // Sincroniza quando o valor é trocado externamente (ex: aplicar template)
   useEffect(() => {
     if (!editor) return
     const current = editor.getHTML()
@@ -71,7 +59,7 @@ export default function RichTextEditor({
 
   return (
     <div
-      className="flex flex-col rounded-card border overflow-hidden"
+      className="flex flex-col border-t sm:rounded-card sm:border overflow-hidden"
       style={{ borderColor: 'var(--border)', background: 'var(--bg-2)' }}
     >
       <Toolbar editor={editor} variables={variables} />
@@ -79,7 +67,6 @@ export default function RichTextEditor({
         className={cn('flex-1 overflow-auto', bounded && 'max-h-[60vh]')}
         style={{ background: 'var(--bg-0)' }}
       >
-        {/* Canvas de papel — A4-like, centralizado */}
         <div className="mx-auto my-4 sm:my-6 paper-canvas">
           <EditorContent editor={editor} />
         </div>
@@ -120,8 +107,8 @@ function Toolbar({ editor, variables }: { editor: Editor; variables: VariableOpt
 
   return (
     <div
-      className="flex flex-wrap items-center gap-1 px-2 py-1.5 border-b sticky top-0 z-10"
-      style={{ background: 'var(--bg-1)', borderColor: 'var(--border)' }}
+      className="relative flex items-center gap-0.5 px-2 border-b sticky top-0 z-10 overflow-x-auto no-scrollbar sm:flex-wrap sm:gap-1 sm:py-1"
+      style={{ background: 'var(--bg-1)', borderColor: 'var(--border)', minHeight: '48px' }}
     >
       <Group>
         <Btn label="Desfazer (Ctrl+Z)" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}>
@@ -218,17 +205,16 @@ function Toolbar({ editor, variables }: { editor: Editor; variables: VariableOpt
       {variables.length > 0 && (
         <>
           <Divider />
-          <div className="relative" ref={varsRef}>
+          <div className="relative shrink-0 my-1" ref={varsRef}>
             <button
               type="button"
               onClick={() => setVarsOpen((v) => !v)}
-              className="flex items-center gap-1.5 h-8 px-2.5 rounded-input text-xs font-semibold transition-all hover:opacity-80"
+              className="flex items-center gap-1.5 h-9 sm:h-8 px-3 rounded-input text-xs font-semibold transition-all hover:opacity-80 whitespace-nowrap"
               style={{ background: 'var(--primary-subtle)', color: 'var(--primary)' }}
             >
-              <Plus size={14} />
-              <span className="hidden sm:inline">Inserir dado</span>
-              <span className="sm:hidden">Dado</span>
-              <ChevronDown size={12} />
+              <Plus size={13} />
+              Inserir dado
+              <ChevronDown size={11} />
             </button>
             {varsOpen && (
               <div
@@ -251,16 +237,22 @@ function Toolbar({ editor, variables }: { editor: Editor; variables: VariableOpt
           </div>
         </>
       )}
+
+      {/* Fade indicando scroll lateral — visível apenas em mobile */}
+      <div
+        className="sm:hidden sticky right-0 top-0 bottom-0 w-6 shrink-0 pointer-events-none self-stretch"
+        style={{ background: 'linear-gradient(to right, transparent, var(--bg-1))' }}
+      />
     </div>
   )
 }
 
 function Group({ children }: { children: React.ReactNode }) {
-  return <div className="flex items-center gap-0.5">{children}</div>
+  return <div className="flex items-center gap-0.5 shrink-0">{children}</div>
 }
 
 function Divider() {
-  return <div className="w-px h-5 mx-1" style={{ background: 'var(--border)' }} />
+  return <div className="w-px h-6 mx-1 shrink-0" style={{ background: 'var(--border)' }} />
 }
 
 function Btn({
@@ -280,13 +272,13 @@ function Btn({
       title={label}
       aria-label={label}
       className={cn(
-        'flex items-center justify-center w-9 h-8 rounded-input transition-all',
+        'flex items-center justify-center rounded-input transition-all shrink-0',
+        'w-10 h-10 sm:w-8 sm:h-8',
         'disabled:opacity-40 disabled:cursor-not-allowed',
-        !disabled && 'hover:opacity-80',
       )}
       style={{
-        background: active ? 'var(--primary-subtle)' : 'transparent',
-        color: active ? 'var(--primary)' : 'var(--text-secondary)',
+        background: active ? 'var(--primary)' : 'transparent',
+        color: active ? '#ffffff' : 'var(--text-secondary)',
       }}
     >
       {children}

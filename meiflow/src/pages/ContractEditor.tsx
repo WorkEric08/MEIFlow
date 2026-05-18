@@ -257,7 +257,7 @@ export default function ContractEditor() {
       </div>
 
       {/* ── Editor WYSIWYG ── */}
-      <div className="max-w-5xl mx-auto px-3 sm:px-5 pt-3 pb-12">
+      <div className="max-w-5xl mx-auto px-0 sm:px-5 pt-3 pb-28 sm:pb-12">
         <RichTextEditor
           value={content}
           onChange={setContent}
