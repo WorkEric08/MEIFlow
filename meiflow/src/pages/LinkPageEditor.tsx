@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link2, Sun, Moon, ExternalLink } from 'lucide-react'
+import { Link2, Sun, Moon, ExternalLink, LayoutList, Columns2, Eye, EyeOff } from 'lucide-react'
 import { useLinkPage, useUpsertLinkPage, useReorderLinks } from '@/features/link-page/hooks'
 import { linkPageService } from '@/features/link-page/service'
 import { linkPageSchema } from '@/features/link-page/schemas'
@@ -62,6 +62,8 @@ export default function LinkPageEditor() {
         website: '',
         accentColor: '#3B8CE8',
         theme: 'dark',
+        showLinks: true,
+        layout: 'vertical',
       },
     })
 
@@ -80,6 +82,8 @@ export default function LinkPageEditor() {
         website: page.website ?? '',
         accentColor: page.accentColor,
         theme: page.theme,
+        showLinks: page.showLinks !== false,
+        layout: page.layout ?? 'vertical',
       })
     }
   }, [page, reset])
@@ -218,6 +222,33 @@ export default function LinkPageEditor() {
                           style={{ background: watchedValues.theme === t ? 'var(--primary-subtle)' : 'var(--bg-2)', borderColor: watchedValues.theme === t ? 'var(--primary)' : 'var(--border)', color: watchedValues.theme === t ? 'var(--primary)' : 'var(--text-secondary)' }}>
                           {t === 'dark' ? <Moon size={14} /> : <Sun size={14} />}
                           {t === 'dark' ? 'Escuro' : 'Claro'}
+                        </button>
+                      ))}
+                    </div>
+                  </Field>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Layout do cartão">
+                    <div className="flex gap-2">
+                      {(['vertical', 'horizontal'] as const).map((l) => (
+                        <button key={l} type="button" onClick={() => setValue('layout', l, { shouldDirty: true })}
+                          className="flex items-center gap-2 px-3 py-2 rounded-input border text-sm font-medium transition-all duration-fast"
+                          style={{ background: watchedValues.layout === l ? 'var(--primary-subtle)' : 'var(--bg-2)', borderColor: watchedValues.layout === l ? 'var(--primary)' : 'var(--border)', color: watchedValues.layout === l ? 'var(--primary)' : 'var(--text-secondary)' }}>
+                          {l === 'vertical' ? <LayoutList size={14} /> : <Columns2 size={14} />}
+                          {l === 'vertical' ? 'Vertical' : 'Horizontal'}
+                        </button>
+                      ))}
+                    </div>
+                  </Field>
+                  <Field label="Links">
+                    <div className="flex gap-2">
+                      {([true, false] as const).map((v) => (
+                        <button key={String(v)} type="button" onClick={() => setValue('showLinks', v, { shouldDirty: true })}
+                          className="flex items-center gap-2 px-3 py-2 rounded-input border text-sm font-medium transition-all duration-fast"
+                          style={{ background: watchedValues.showLinks === v ? 'var(--primary-subtle)' : 'var(--bg-2)', borderColor: watchedValues.showLinks === v ? 'var(--primary)' : 'var(--border)', color: watchedValues.showLinks === v ? 'var(--primary)' : 'var(--text-secondary)' }}>
+                          {v ? <Eye size={14} /> : <EyeOff size={14} />}
+                          {v ? 'Exibir' : 'Ocultar'}
                         </button>
                       ))}
                     </div>

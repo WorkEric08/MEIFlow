@@ -13,6 +13,8 @@ export interface LinkPageFormValues {
   website: string
   accentColor: string
   theme: 'dark' | 'light'
+  showLinks: boolean
+  layout: 'vertical' | 'horizontal'
 }
 
 export interface LinkFormValues {

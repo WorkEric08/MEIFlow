@@ -15,6 +15,8 @@ export const linkPageSchema = z.object({
   website: z.string().url('URL inválida').or(z.literal('')).optional(),
   accentColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Cor inválida'),
   theme: z.enum(['dark', 'light']),
+  showLinks: z.boolean(),
+  layout: z.enum(['vertical', 'horizontal']),
 })
 
 export const linkSchema = z.object({

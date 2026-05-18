@@ -77,6 +77,8 @@ export interface LinkPage extends BaseEntity {
   theme: 'dark' | 'light'
   accentColor: string
   links: LinkPageLink[]
+  showLinks?: boolean
+  layout?: 'vertical' | 'horizontal'
 }
 
 // ─── Database ──────────────────────────────────────────────────
