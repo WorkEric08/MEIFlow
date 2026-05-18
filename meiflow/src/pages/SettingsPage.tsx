@@ -235,21 +235,16 @@ function AboutSection() {
   async function handleUpdate() {
     setUpdating(true)
     try {
-      // Limpa todos os caches do Service Worker
-      if ('caches' in window) {
-        const keys = await caches.keys()
-        await Promise.all(keys.map((k) => caches.delete(k)))
-      }
-      // Dispara update no SW (não aguarda — o reload já vai buscar tudo novo)
       if ('serviceWorker' in navigator) {
         const reg = await navigator.serviceWorker.ready
+        // Ativa imediatamente qualquer SW em espera
         reg.waiting?.postMessage({ type: 'SKIP_WAITING' })
-        reg.update().catch(() => {})
+        // Verifica se há nova versão disponível no servidor
+        await reg.update()
       }
     } catch {
-      // ignora erros e recarrega de qualquer forma
+      // ignora e recarrega de qualquer forma
     }
-    // Reload imediato — equivalente ao Ctrl+Shift+R
     window.location.reload()
   }
 
