@@ -11,6 +11,26 @@ import AccentColorPicker from '@/features/link-page/components/AccentColorPicker
 import LinkPagePreview from '@/features/link-page/components/LinkPagePreview'
 import type { LinkPageFormValues } from '@/features/link-page/types'
 
+function formatPhone(value: string): string {
+  // Extrai apenas dígitos, limitado a 11 (DDD + 9 + 8)
+  const digits = value.replace(/\D/g, '').slice(0, 11)
+  if (!digits) return ''
+
+  // Auto-insere o 9 após o DDD se o usuário não colocar
+  let d = digits
+  if (d.length > 2 && d[2] !== '9') {
+    d = (d.slice(0, 2) + '9' + d.slice(2)).slice(0, 11)
+  }
+
+  const ddd = d.slice(0, 2)
+  const nine = d.slice(2, 3)
+  const rest = d.slice(3)
+
+  if (d.length <= 2) return `(${ddd}`
+  if (d.length === 3) return `(${ddd}) ${nine}`
+  return `(${ddd}) ${nine} ${rest}`
+}
+
 function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
   return (
     <div>
@@ -161,9 +181,16 @@ export default function LinkPageEditor() {
                 {/* ── Telefone + E-mail ── */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="Telefone" error={errors.phone?.message}>
-                    <input {...register('phone')} placeholder="(47) 99999-9999" inputMode="tel"
+                    <input
+                      {...register('phone')}
+                      onChange={(e) => {
+                        setValue('phone', formatPhone(e.target.value), { shouldDirty: true, shouldValidate: false })
+                      }}
+                      placeholder="(47) 9 00000000"
+                      inputMode="tel"
                       className="w-full px-3 py-2 rounded-input text-sm border outline-none transition-all duration-fast"
-                      style={{ background: 'var(--bg-2)', color: 'var(--text-primary)', borderColor: errors.phone ? 'var(--status-overdue)' : 'var(--border)' }} />
+                      style={{ background: 'var(--bg-2)', color: 'var(--text-primary)', borderColor: errors.phone ? 'var(--status-overdue)' : 'var(--border)' }}
+                    />
                   </Field>
                   <Field label="E-mail de contato" error={errors.email?.message}>
                     <input {...register('email')} placeholder="contato@exemplo.com" type="email" inputMode="email"
