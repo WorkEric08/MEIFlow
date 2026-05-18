@@ -186,7 +186,7 @@ export default function LinkPageEditor() {
                       onChange={(e) => {
                         setValue('phone', formatPhone(e.target.value), { shouldDirty: true, shouldValidate: false })
                       }}
-                      placeholder="(47) 9 00000000"
+                      placeholder="(00) 0 0000-0000"
                       inputMode="tel"
                       className="w-full px-3 py-2 rounded-input text-sm border outline-none transition-all duration-fast"
                       style={{ background: 'var(--bg-2)', color: 'var(--text-primary)', borderColor: errors.phone ? 'var(--status-overdue)' : 'var(--border)' }}
