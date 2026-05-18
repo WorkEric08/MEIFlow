@@ -134,7 +134,7 @@ export default function LinkPagePublic() {
     >
       {/* Botão Voltar */}
       <button
-        onClick={() => navigate(-1)}
+        onClick={() => navigate('/link-page')}
         className="no-print fixed top-4 left-4 z-50 flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all duration-fast hover:opacity-80 active:scale-95 rounded-input border"
         style={{ background: t.bg1, borderColor: t.blueprintBorder, color: t.textSecondary, boxShadow: t.cardShadow }}
       >
