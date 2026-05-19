@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { getPWAEnv, useIsPWA } from '@/hooks/useIsPWA'
 import { installAndroidBack } from '@/hooks/useAndroidBack'
@@ -112,8 +112,8 @@ export default function PWANativeShell() {
     return () => window.clearTimeout(t)
   }, [splash])
 
-  // Show splash when navigating away from /settings
-  useEffect(() => {
+  // Show splash when navigating away from /settings (useLayoutEffect = before browser paint)
+  useLayoutEffect(() => {
     if (prevPathname.current === '/settings' && location.pathname !== '/settings' && env.isPWAMobile) {
       if (settingsTimer.current) clearTimeout(settingsTimer.current)
       setSettingsSplash(true)
