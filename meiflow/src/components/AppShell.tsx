@@ -1,4 +1,5 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import {
   LayoutDashboard,
   Users,
@@ -24,9 +25,74 @@ const NAV_ITEMS = [
   { to: '/link-page', label: 'Link Page',  icon: Link2 },
 ]
 
+const TAB_PCT = 100 / NAV_ITEMS.length
+const EASE_STRETCH  = 'cubic-bezier(0.4, 0, 0.6, 1)'
+const EASE_CONTRACT = 'cubic-bezier(0.34, 1.56, 0.64, 1)'
+
+function getActiveNavIndex(pathname: string): number {
+  for (let i = 0; i < NAV_ITEMS.length; i++) {
+    const { to, end } = NAV_ITEMS[i]
+    if (end ? pathname === to : pathname.startsWith(to)) return i
+  }
+  return -1
+}
+
+function pillLeft(i: number): string {
+  return `calc(${i} * ${TAB_PCT}% + ${TAB_PCT * 0.5}% - 1rem)`
+}
+
 export default function AppShell() {
   const location = useLocation()
   const isHome = location.pathname === '/'
+  const activeIndex = getActiveNavIndex(location.pathname)
+  const prevRef = useRef(activeIndex)
+
+  const [pillStyle, setPillStyle] = useState<CSSProperties>({
+    left: pillLeft(Math.max(activeIndex, 0)),
+    width: '2rem',
+    opacity: activeIndex >= 0 ? 1 : 0,
+    transition: 'none',
+  })
+
+  useEffect(() => {
+    const prev = prevRef.current
+    const curr = activeIndex
+    prevRef.current = curr
+
+    if (curr < 0) {
+      setPillStyle(s => ({ ...s, opacity: 0, transition: 'opacity 150ms ease' }))
+      return
+    }
+    if (prev < 0) {
+      setPillStyle({ left: pillLeft(curr), width: '2rem', opacity: 1, transition: 'opacity 200ms ease' })
+      return
+    }
+    if (prev === curr) return
+
+    const movingRight = curr > prev
+    const diff = Math.abs(curr - prev)
+    const stretchW = `calc(${diff * TAB_PCT}% + 2rem)`
+
+    // Phase 1 — stretch
+    setPillStyle(movingRight
+      ? { left: pillLeft(prev), width: stretchW, opacity: 1, transition: `width 140ms ${EASE_STRETCH}` }
+      : { left: pillLeft(curr), width: stretchW, opacity: 1, transition: `left 140ms ${EASE_STRETCH}, width 140ms ${EASE_STRETCH}` }
+    )
+
+    // Phase 2 — contract to destination with spring
+    const t = window.setTimeout(() => {
+      setPillStyle({
+        left: pillLeft(curr),
+        width: '2rem',
+        opacity: 1,
+        transition: movingRight
+          ? `left 180ms ${EASE_CONTRACT}, width 180ms ${EASE_CONTRACT}`
+          : `width 180ms ${EASE_CONTRACT}`,
+      })
+    }, 140)
+
+    return () => clearTimeout(t)
+  }, [activeIndex])
 
   return (
     <div className="flex min-h-dvh" style={{ background: 'var(--bg-0)' }}>
@@ -138,6 +204,19 @@ export default function AppShell() {
             zIndex: 40,
           }}
         >
+          {/* Pill animado — único elemento que desliza/estica entre abas */}
+          <span
+            aria-hidden
+            className="rounded-b-full pointer-events-none"
+            style={{
+              position: 'absolute',
+              top: 0,
+              height: '2px',
+              background: 'var(--primary)',
+              ...pillStyle,
+            }}
+          />
+
           {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
             <NavLink key={to} to={to} end={end}
               onClick={() => triggerHaptic('selection')}
@@ -153,13 +232,6 @@ export default function AppShell() {
             >
               {({ isActive }) => (
                 <>
-                  {/* indicador ativo no topo — pill curto, Material-style */}
-                  {isActive && (
-                    <span
-                      className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-b-full"
-                      style={{ background: 'var(--primary)' }}
-                    />
-                  )}
                   <Icon size={20} aria-hidden strokeWidth={isActive ? 2.4 : 2} />
                   <span className="hidden xs:block leading-none">{label}</span>
                 </>
