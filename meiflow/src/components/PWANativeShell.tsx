@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { getPWAEnv, useIsPWA } from '@/hooks/useIsPWA'
 import { installAndroidBack } from '@/hooks/useAndroidBack'
@@ -86,6 +86,9 @@ export default function PWANativeShell() {
   const theme = useThemeStore((s) => s.theme)
   const location = useLocation()
   const [splash, setSplash] = useState(() => getPWAEnv().isPWAMobile)
+  const [settingsSplash, setSettingsSplash] = useState(false)
+  const prevPathname = useRef(location.pathname)
+  const settingsTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Apply html classes whenever env changes
   useEffect(() => {
@@ -109,11 +112,24 @@ export default function PWANativeShell() {
     return () => window.clearTimeout(t)
   }, [splash])
 
+  // Show splash when navigating away from /settings
+  useEffect(() => {
+    if (prevPathname.current === '/settings' && location.pathname !== '/settings' && env.isPWAMobile) {
+      if (settingsTimer.current) clearTimeout(settingsTimer.current)
+      setSettingsSplash(true)
+      settingsTimer.current = window.setTimeout(() => {
+        setSettingsSplash(false)
+        settingsTimer.current = null
+      }, 820)
+    }
+    prevPathname.current = location.pathname
+  }, [location.pathname, env.isPWAMobile])
+
   // Mark route key for slide-direction animation
   useEffect(() => {
     if (!env.isPWAMobile) return
     document.documentElement.dataset.route = location.pathname
   }, [location.pathname, env.isPWAMobile])
 
-  return <PWASplash visible={splash && env.isPWAMobile} />
+  return <PWASplash visible={(splash || settingsSplash) && env.isPWAMobile} />
 }

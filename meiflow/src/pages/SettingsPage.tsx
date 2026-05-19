@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Settings, User, Palette, Info, Sun, Moon, CheckCheck, Save, RefreshCw, Camera, ArrowLeft } from 'lucide-react'
+import { Settings, User, Palette, Info, Sun, Moon, CheckCheck, Save, RefreshCw, Camera } from 'lucide-react'
 
 declare const __COMMIT_HASH__: string
 declare const __COMMIT_DATE__: string
@@ -305,16 +305,6 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto animate-fade-in">
-      <div className="mb-4 lg:hidden">
-        <button
-          onClick={() => navigate('/')}
-          className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all duration-fast hover:opacity-80 active:scale-95 rounded-input border"
-          style={{ background: 'var(--bg-1)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
-        >
-          <ArrowLeft size={14} />
-          Voltar
-        </button>
-      </div>
       <div className="flex items-center gap-2 mb-6">
         <Settings size={18} style={{ color: 'var(--primary)' }} />
         <h1 className="text-h2 font-bold" style={{ color: 'var(--text-primary)' }}>Configurações</h1>
