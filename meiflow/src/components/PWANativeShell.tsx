@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { getPWAEnv, useIsPWA } from '@/hooks/useIsPWA'
 import { installAndroidBack } from '@/hooks/useAndroidBack'
 import { useThemeStore } from '@/store/theme'
+import { useSplashStore } from '@/store/splash'
 
 const STATUS_BAR_COLORS = {
   dark: '#0D1117',
@@ -85,10 +86,9 @@ export default function PWANativeShell() {
   const env = useIsPWA()
   const theme = useThemeStore((s) => s.theme)
   const location = useLocation()
+  const { settingsActive, triggerSettings, dismissSettings } = useSplashStore()
   const [splash, setSplash] = useState(() => getPWAEnv().isPWAMobile)
-  const [settingsSplash, setSettingsSplash] = useState(false)
   const prevPathname = useRef(location.pathname)
-  const settingsTimer = useRef<number | null>(null)
 
   // Apply html classes whenever env changes
   useEffect(() => {
@@ -112,18 +112,20 @@ export default function PWANativeShell() {
     return () => window.clearTimeout(t)
   }, [splash])
 
-  // Show splash when navigating away from /settings (useLayoutEffect = before browser paint)
+  // Dismiss settings splash after animation completes
+  useEffect(() => {
+    if (!settingsActive) return
+    const t = window.setTimeout(dismissSettings, 820)
+    return () => clearTimeout(t)
+  }, [settingsActive, dismissSettings])
+
+  // Fallback: system back button — show splash before browser paints
   useLayoutEffect(() => {
     if (prevPathname.current === '/settings' && location.pathname !== '/settings' && env.isPWAMobile) {
-      if (settingsTimer.current) clearTimeout(settingsTimer.current)
-      setSettingsSplash(true)
-      settingsTimer.current = window.setTimeout(() => {
-        setSettingsSplash(false)
-        settingsTimer.current = null
-      }, 820)
+      triggerSettings()
     }
     prevPathname.current = location.pathname
-  }, [location.pathname, env.isPWAMobile])
+  }, [location.pathname, env.isPWAMobile, triggerSettings])
 
   // Mark route key for slide-direction animation
   useEffect(() => {
@@ -131,5 +133,5 @@ export default function PWANativeShell() {
     document.documentElement.dataset.route = location.pathname
   }, [location.pathname, env.isPWAMobile])
 
-  return <PWASplash visible={(splash || settingsSplash) && env.isPWAMobile} />
+  return <PWASplash visible={(splash || settingsActive) && env.isPWAMobile} />
 }

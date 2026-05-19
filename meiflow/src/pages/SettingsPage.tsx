@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
-import { Settings, User, Palette, Info, Sun, Moon, CheckCheck, Save, RefreshCw, Camera } from 'lucide-react'
+import { Settings, User, Palette, Info, Sun, Moon, CheckCheck, Save, RefreshCw, Camera, ArrowLeft } from 'lucide-react'
 
 declare const __COMMIT_HASH__: string
 declare const __COMMIT_DATE__: string
 import { useNavigate } from 'react-router-dom'
 import { useThemeStore } from '@/store/theme'
 import { useProfileStore } from '@/store/profile'
+import { useSplashStore } from '@/store/splash'
 import { inputCls, inputStyle, Field } from '@/components/shared'
 import { cn } from '@/lib/utils'
 
@@ -292,6 +293,7 @@ function isDevMode(name: string) {
 export default function SettingsPage() {
   const navigate = useNavigate()
   const { profile } = useProfileStore()
+  const triggerSettings = useSplashStore((s) => s.triggerSettings)
   const devMode = isDevMode(profile.name)
 
   useEffect(() => {
@@ -306,6 +308,15 @@ export default function SettingsPage() {
   return (
     <div className="max-w-2xl mx-auto animate-fade-in">
       <div className="flex items-center gap-2 mb-6">
+        <button
+          onClick={() => { triggerSettings(); navigate('/') }}
+          className="lg:hidden p-1.5 -ml-1 rounded-input transition-all duration-fast hover:opacity-70 active:scale-90 flex items-center justify-center"
+          style={{ color: 'var(--text-secondary)' }}
+          data-pwa-tap
+          aria-label="Voltar"
+        >
+          <ArrowLeft size={20} />
+        </button>
         <Settings size={18} style={{ color: 'var(--primary)' }} />
         <h1 className="text-h2 font-bold" style={{ color: 'var(--text-primary)' }}>Configurações</h1>
       </div>
