@@ -88,7 +88,7 @@ export default function PWANativeShell() {
   const [splash, setSplash] = useState(() => getPWAEnv().isPWAMobile)
   const [settingsSplash, setSettingsSplash] = useState(false)
   const prevPathname = useRef(location.pathname)
-  const settingsTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const settingsTimer = useRef<number | null>(null)
 
   // Apply html classes whenever env changes
   useEffect(() => {
