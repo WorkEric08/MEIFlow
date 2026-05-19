@@ -120,6 +120,7 @@ export default function AppShell() {
 
         {/* Page content — padding-bottom acomoda bottom nav + safe-area-inset-bottom */}
         <main
+          key={location.pathname}
           className="flex-1 overflow-auto p-4 md:p-5 lg:p-6 lg:pb-6"
           style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 96px)' }}
         >
