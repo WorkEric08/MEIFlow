@@ -1,1 +1,0 @@
-import{a3 as a,a4 as i}from"./index-UH2wiSlj.js";const l=a()(i(e=>({profile:{name:"",email:"",company:""},setProfile:o=>e(r=>({profile:{...r.profile,...o}}))}),{name:"meiflow-profile"}));export{l as u};

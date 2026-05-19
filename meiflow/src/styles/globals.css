@@ -254,9 +254,10 @@ html.pwa-mobile [data-pwa-tap]:active {
   transition: transform 80ms ease-out;
 }
 
-/* Page transition — aplica fade/slide ao container <main> em cada nav */
-html.pwa-mobile main {
-  animation: pwaPageIn 220ms cubic-bezier(0.22, 1, 0.36, 1);
+/* Page transition — aplica fade/slide às páginas filhas de <main> */
+html.pwa-mobile main > .animate-fade-in,
+html.pwa-standalone main > .animate-fade-in {
+  animation: pwaPageIn 220ms cubic-bezier(0.22, 1, 0.36, 1) !important;
 }
 
 /* Modais e sheets devem cobrir até a borda da tela (sem padding lateral
@@ -362,7 +363,8 @@ html.modal-open nav.backdrop-blur {
 
 /* Animações respeitam preferência do usuário */
 @media (prefers-reduced-motion: reduce) {
-  html.pwa-mobile main,
+  html.pwa-mobile main > .animate-fade-in,
+  html.pwa-standalone main > .animate-fade-in,
   html.pwa-mobile button:active,
   html.pwa-mobile a:active,
   html.pwa-mobile [role="button"]:active {
