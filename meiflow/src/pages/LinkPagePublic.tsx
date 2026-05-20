@@ -159,12 +159,17 @@ export default function LinkPagePublic() {
     </div>
   )
 
+  const hasLinks = showLinks && page.links.length > 0
+
   // ── Layout horizontal ────────────────────────────────────────────
   const HorizontalCard = (
     <article
       id="card-print-area"
-      className="relative w-full rounded-modal border overflow-y-auto"
-      style={{ background: t.bg1, borderColor: t.blueprintBorder, boxShadow: t.cardShadow, maxHeight: '100%', scrollbarWidth: 'none' }}
+      className="relative w-full rounded-modal border flex flex-col"
+      style={{
+        flex: 1, minHeight: 0, overflow: 'hidden',
+        background: t.bg1, borderColor: t.blueprintBorder, boxShadow: t.cardShadow,
+      }}
     >
       <div className="blueprint-grid absolute inset-0 pointer-events-none" />
       <div className="absolute top-3 right-4 font-mono text-[10px] tracking-widest uppercase pointer-events-none"
@@ -172,49 +177,84 @@ export default function LinkPagePublic() {
         ID · {page.username}
       </div>
 
-      {/* Colunas */}
-      <div className="relative flex flex-col sm:flex-row">
-        {/* Esquerda: identidade + bio + contatos */}
-        <div className="flex-1 min-w-0 p-5 sm:p-6 pt-8 sm:pt-8">
+      {/* Corpo scrollável — flex-row para separar colunas */}
+      <div
+        className="relative flex-1 min-h-0 flex flex-col sm:flex-row"
+        style={{ overflowY: 'auto', scrollbarWidth: 'none' }}
+      >
+        {/* Coluna esquerda: identidade + bio + contatos */}
+        <div className={`flex flex-col p-5 sm:p-7 pt-8 ${hasLinks ? 'flex-1 min-w-0' : 'w-full'}`}>
           {AvatarIdentity}
           {Bio}
-          {Contacts}
+          {contacts.length > 0 && (
+            <>
+              <Separator color={t.blueprintBorder} label="CONTATO" labelColor={t.textTertiary} bg={t.bg1} />
+              {/* 2 colunas quando não há links, para aproveitar o espaço horizontal */}
+              <ul className={`grid gap-2 sm:gap-2.5 ${!hasLinks ? 'sm:grid-cols-2' : 'grid-cols-1'}`}>
+                {contacts.map(({ key, label, href }) => {
+                  const Icon = CONTACT_ICONS[key]
+                  const content = (
+                    <span className="flex items-center gap-2.5">
+                      <span className="w-7 h-7 rounded-input flex items-center justify-center shrink-0 border"
+                        style={{ background: t.bg2, borderColor: t.blueprintBorder, color: accent }}>
+                        <Icon size={13} strokeWidth={2.2} />
+                      </span>
+                      <span className="text-sm font-medium truncate min-w-0 flex-1" style={{ color: t.textPrimary }}>{label}</span>
+                    </span>
+                  )
+                  return (
+                    <li key={key}>
+                      {href ? (
+                        <a href={href} target={key === 'website' ? '_blank' : undefined}
+                          rel={key === 'website' ? 'noopener noreferrer' : undefined}
+                          className="block transition-all duration-fast hover:opacity-80 active:scale-[0.99]">
+                          {content}
+                        </a>
+                      ) : content}
+                    </li>
+                  )
+                })}
+              </ul>
+            </>
+          )}
         </div>
 
+        {/* Separador vertical — só desktop e só quando há links */}
+        {hasLinks && (
+          <div className="hidden sm:block w-px shrink-0 self-stretch" style={{ background: t.blueprintBorder }} />
+        )}
+
         {/* Coluna direita: links */}
-        {showLinks && page.links.length > 0 && (
-          <>
-            <div className="hidden sm:block w-px self-stretch shrink-0" style={{ background: t.blueprintBorder }} />
-            <div
-              className="border-t sm:border-t-0 p-5 sm:p-6 pt-4 sm:pt-8 sm:w-[220px] sm:shrink-0"
-              style={{ borderColor: t.blueprintBorder }}
-            >
-              <Separator color={t.blueprintBorder} label="LINKS" labelColor={t.textTertiary} bg={t.bg1} />
-              <div className="flex flex-col gap-2 sm:gap-2.5 mt-1">
-                {page.links.map((link) => (
-                  <a
-                    key={link.id}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => handleLinkClick(link.id)}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-input border font-semibold transition-all duration-fast active:scale-[0.98] no-underline"
-                    style={{ background: t.bg2, borderColor: t.blueprintBorder, color: t.textPrimary }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = accent }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = t.blueprintBorder }}
-                  >
-                    <span className="text-sm truncate">{link.label}</span>
-                    <ExternalLink size={14} style={{ color: accent, flexShrink: 0 }} />
-                  </a>
-                ))}
-              </div>
+        {hasLinks && (
+          <div
+            className="flex flex-col p-5 sm:p-7 pt-4 sm:pt-8 sm:w-[210px] shrink-0 border-t sm:border-t-0"
+            style={{ borderColor: t.blueprintBorder }}
+          >
+            <Separator color={t.blueprintBorder} label="LINKS" labelColor={t.textTertiary} bg={t.bg1} />
+            <div className="flex flex-col gap-2 sm:gap-2.5">
+              {page.links.map((link) => (
+                <a
+                  key={link.id}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => handleLinkClick(link.id)}
+                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-input border font-semibold transition-all duration-fast active:scale-[0.98] no-underline"
+                  style={{ background: t.bg2, borderColor: t.blueprintBorder, color: t.textPrimary }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = accent }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = t.blueprintBorder }}
+                >
+                  <span className="text-sm truncate">{link.label}</span>
+                  <ExternalLink size={14} style={{ color: accent, flexShrink: 0 }} />
+                </a>
+              ))}
             </div>
-          </>
+          </div>
         )}
       </div>
 
-      {/* Footer full-width */}
-      <div className="relative px-5 sm:px-6 pt-3 pb-4 sm:pb-5 border-t flex items-center"
+      {/* Footer pinado no fundo */}
+      <div className="relative flex-none px-5 sm:px-7 pt-2.5 pb-3 sm:pb-4 border-t flex items-center"
         style={{ borderColor: t.blueprintBorder }}>
         <span className="font-mono text-[11px] tracking-wide truncate" style={{ color: accent, opacity: 0.7 }}>
           meiflow.com/{page.username}
@@ -227,8 +267,11 @@ export default function LinkPagePublic() {
   const VerticalCard = (
     <article
       id="card-print-area"
-      className="relative w-full rounded-modal border overflow-y-auto"
-      style={{ background: t.bg1, borderColor: t.blueprintBorder, boxShadow: t.cardShadow, maxHeight: '100%', scrollbarWidth: 'none' }}
+      className="relative w-full rounded-modal border flex flex-col"
+      style={{
+        flex: 1, minHeight: 0, overflow: 'hidden',
+        background: t.bg1, borderColor: t.blueprintBorder, boxShadow: t.cardShadow,
+      }}
     >
       <div className="blueprint-grid absolute inset-0 pointer-events-none" />
       <div className="absolute top-3 right-4 font-mono text-[10px] tracking-widest uppercase pointer-events-none"
@@ -236,7 +279,8 @@ export default function LinkPagePublic() {
         ID · {page.username}
       </div>
 
-      <div className="relative p-4 sm:p-6">
+      <div className="relative flex-1 min-h-0 p-4 sm:p-6 pt-8"
+        style={{ overflowY: 'auto', scrollbarWidth: 'none' }}>
         {AvatarIdentity}
         {Bio}
         {Contacts}
@@ -247,13 +291,13 @@ export default function LinkPagePublic() {
             {LinksList}
           </>
         )}
+      </div>
 
-        <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t flex items-center"
-          style={{ borderColor: t.blueprintBorder }}>
-          <span className="font-mono text-[11px] tracking-wide truncate" style={{ color: accent, opacity: 0.7 }}>
-            meiflow.com/{page.username}
-          </span>
-        </div>
+      <div className="relative flex-none px-4 sm:px-6 pt-2.5 pb-3 sm:pb-4 border-t flex items-center"
+        style={{ borderColor: t.blueprintBorder }}>
+        <span className="font-mono text-[11px] tracking-wide truncate" style={{ color: accent, opacity: 0.7 }}>
+          meiflow.com/{page.username}
+        </span>
       </div>
     </article>
   )
