@@ -5,6 +5,7 @@ import { useClients } from '@/features/clients/hooks'
 import { useProjects } from '@/features/projects/hooks'
 import { useToast } from '@/store/toast'
 import PaymentModal from '@/features/payments/components/PaymentModal'
+import { ConfirmModal } from '@/components/ConfirmModal'
 import { EmptyState, StatusBadge, MetricCard } from '@/components/shared'
 import { SkeletonList } from '@/components/Skeleton'
 import { formatCurrency, formatDate } from '@/lib/utils'
@@ -28,12 +29,18 @@ export default function PaymentsPage() {
   const [filter, setFilter] = useState<FilterStatus>('all')
   const [modal, setModal] = useState(false)
   const [editing, setEditing] = useState<Payment | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<Payment | null>(null)
 
   const filtered = filter === 'all' ? payments : payments.filter((p) => p.status === filter)
 
   function handleEdit(p: Payment) { setEditing(p); setModal(true) }
   function handleNew() { setEditing(null); setModal(true) }
-  function handleDelete(p: Payment) {
+  function handleDelete(p: Payment) { setConfirmDelete(p) }
+
+  function confirmDeletion() {
+    if (!confirmDelete) return
+    const p = confirmDelete
+    setConfirmDelete(null)
     deletePayment.mutate(p.id, {
       onSuccess: () => toast.info('Pagamento removido.', {
         action: { label: 'Desfazer', onClick: () => restorePayment.mutate(p) },
@@ -214,6 +221,15 @@ export default function PaymentsPage() {
       )}
 
       <PaymentModal open={modal} onClose={() => setModal(false)} editing={editing} />
+      <ConfirmModal
+        open={!!confirmDelete}
+        title="Remover pagamento?"
+        description={confirmDelete ? `"${confirmDelete.description}" será removido permanentemente.` : ''}
+        confirmLabel="Remover"
+        cancelLabel="Cancelar"
+        onConfirm={confirmDeletion}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   )
 }

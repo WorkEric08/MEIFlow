@@ -5,6 +5,7 @@ import { Pencil, Trash2, GripVertical, Check, X, ExternalLink } from 'lucide-rea
 import { cn } from '@/lib/utils'
 import { linkSchema } from '../schemas'
 import { useDeleteLink, useUpdateLink } from '../hooks'
+import { ConfirmModal } from '@/components/ConfirmModal'
 import type { LinkFormValues, LinkPageLink } from '../types'
 
 interface Props {
@@ -20,6 +21,7 @@ export default function LinkCard({ link, accentColor, index, onDragStart, onDrag
   const [editing, setEditing] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [isOver, setIsOver] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const deleteLink = useDeleteLink()
   const updateLink = useUpdateLink()
 
@@ -140,7 +142,7 @@ export default function LinkCard({ link, accentColor, index, onDragStart, onDrag
             <Pencil size={14} />
           </button>
           <button
-            onClick={() => deleteLink.mutate(link.id)}
+            onClick={() => setConfirmDelete(true)}
             disabled={deleteLink.isPending}
             aria-label="Remover link"
             className="p-2.5 rounded-input transition-all duration-fast hover:opacity-70"
@@ -149,6 +151,16 @@ export default function LinkCard({ link, accentColor, index, onDragStart, onDrag
           </button>
         </div>
       )}
+
+      <ConfirmModal
+        open={confirmDelete}
+        title="Remover link?"
+        description={`O link "${link.label}" será removido do seu cartão de visitas.`}
+        confirmLabel="Remover"
+        cancelLabel="Cancelar"
+        onConfirm={() => { setConfirmDelete(false); deleteLink.mutate(link.id) }}
+        onCancel={() => setConfirmDelete(false)}
+      />
     </div>
   )
 }

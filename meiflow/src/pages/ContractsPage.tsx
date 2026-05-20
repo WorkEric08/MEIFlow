@@ -6,6 +6,7 @@ import { useClients } from '@/features/clients/hooks'
 import { useToast } from '@/store/toast'
 import ContractModal from '@/features/contracts/components/ContractModal'
 import ContractViewer from '@/features/contracts/components/ContractViewer'
+import { ConfirmModal } from '@/components/ConfirmModal'
 import { EmptyState, StatusBadge } from '@/components/shared'
 import { SkeletonList } from '@/components/Skeleton'
 import { formatDate } from '@/lib/utils'
@@ -39,6 +40,7 @@ export default function ContractsPage() {
 
   const [createModal, setCreateModal] = useState(false)
   const [viewing, setViewing] = useState<Contract | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<Contract | null>(null)
   const [filter, setFilter] = useState<Filter>('all')
   const [query, setQuery] = useState('')
 
@@ -65,7 +67,12 @@ export default function ContractsPage() {
     navigate(`/contracts/${contract.id}/edit`)
   }
 
-  function handleDelete(contract: Contract) {
+  function handleDelete(contract: Contract) { setConfirmDelete(contract) }
+
+  function confirmDeletion() {
+    if (!confirmDelete) return
+    const contract = confirmDelete
+    setConfirmDelete(null)
     deleteContract.mutate(contract.id, {
       onSuccess: () => toast.info(`"${contract.title}" removido.`, {
         action: { label: 'Desfazer', onClick: () => restoreContract.mutate(contract) },
@@ -293,6 +300,15 @@ export default function ContractsPage() {
 
       <ContractModal open={createModal} onClose={() => setCreateModal(false)} />
       {viewing && <ContractViewer contract={viewing} onClose={() => setViewing(null)} />}
+      <ConfirmModal
+        open={!!confirmDelete}
+        title="Remover contrato?"
+        description={confirmDelete ? `"${confirmDelete.title}" será removido permanentemente.` : ''}
+        confirmLabel="Remover"
+        cancelLabel="Cancelar"
+        onConfirm={confirmDeletion}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 import {
   format, parseISO, startOfMonth, endOfMonth,
@@ -108,7 +109,7 @@ export default function DateInput({ value, onChange, onBlur, error = false, disa
         <Calendar size={14} className="shrink-0" style={{ color: 'var(--text-tertiary)' }} />
       </button>
 
-      {open && (
+      {open && createPortal(
         <>
           {/* Backdrop */}
           <div
@@ -122,7 +123,7 @@ export default function DateInput({ value, onChange, onBlur, error = false, disa
             onClick={close}
           />
 
-          {/* Calendário */}
+          {/* Calendário — portal garante centralização mesmo dentro de modais com transform */}
           <div
             className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-[16px] border flex flex-col overflow-hidden"
             style={{
@@ -258,7 +259,8 @@ export default function DateInput({ value, onChange, onBlur, error = false, disa
               </button>
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </>
   )
