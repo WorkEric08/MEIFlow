@@ -1,18 +1,15 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom'
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import {
-  LayoutDashboard,
-  Users,
-  FolderKanban,
-  CreditCard,
-  FileText,
-  Link2,
-  Settings,
+  LayoutDashboard, Users, FolderKanban, CreditCard, FileText, Link2, Settings, Search,
 } from 'lucide-react'
 import NotificationBell from '@/components/NotificationBell'
 import OfflineIndicator from '@/components/OfflineIndicator'
 import PWAInstallButton from '@/components/PWAInstallButton'
 import PWANativeShell from '@/components/PWANativeShell'
+import Toaster from '@/components/Toaster'
+import { GlobalSearch } from '@/components/GlobalSearch'
+import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut'
 import { triggerHaptic } from '@/hooks/useHaptic'
 import { cn } from '@/lib/utils'
 
@@ -44,6 +41,10 @@ function pillLeft(i: number): string {
 export default function AppShell() {
   const location = useLocation()
   const isHome = location.pathname === '/'
+  const [searchOpen, setSearchOpen] = useState(false)
+  const openSearch = useCallback(() => setSearchOpen(true), [])
+  useKeyboardShortcut({ key: 'k', ctrlOrMeta: true, onTrigger: openSearch })
+
   const activeIndex = getActiveNavIndex(location.pathname)
   const prevRef = useRef(activeIndex)
 
@@ -97,6 +98,8 @@ export default function AppShell() {
   return (
     <div className="flex min-h-dvh" style={{ background: 'var(--bg-0)' }}>
       <PWANativeShell />
+      <Toaster />
+      <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
 
       {/* ── Sidebar (lg+) ──
           No PWA instalado (standalone): fica transparente — sem bg, sem borda, sem divisores.
@@ -132,7 +135,16 @@ export default function AppShell() {
         <div className="px-3 py-4 border-t flex flex-col gap-3 pwa-sidebar-divider"
           style={{ borderColor: 'var(--border)' }}>
           <PWAInstallButton />
-          <div className="flex items-center justify-center gap-8">
+          <div className="flex items-center justify-center gap-6">
+            <button
+              onClick={openSearch}
+              aria-label="Busca global (Ctrl+K)"
+              title="Busca global (Ctrl+K)"
+              className="p-2 rounded-input transition-all duration-fast hover:opacity-80"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              <Search size={16} aria-hidden />
+            </button>
             <NavLink to="/settings"
               aria-label="Configurações"
               className="p-2 rounded-input transition-all duration-fast hover:opacity-80"
@@ -164,6 +176,15 @@ export default function AppShell() {
               <OfflineIndicator />
             </div>
             <div className="flex items-center gap-0.5">
+              <button
+                onClick={openSearch}
+                aria-label="Busca global"
+                data-pwa-tap
+                className="p-2.5 rounded-input min-h-[40px] min-w-[40px] flex items-center justify-center transition-all hover:opacity-70"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                <Search size={18} />
+              </button>
               <NotificationBell />
               <NavLink
                 to="/settings"

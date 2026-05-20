@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { CreditCard, Plus, Pencil, Trash2, CheckCircle, Calendar } from 'lucide-react'
-import { usePayments, usePaymentSummary, useMarkAsPaid, useDeletePayment } from '@/features/payments/index'
+import { usePayments, usePaymentSummary, useMarkAsPaid, useDeletePayment, useRestoreDeletedPayment } from '@/features/payments/index'
 import { useClients } from '@/features/clients/hooks'
 import { useProjects } from '@/features/projects/hooks'
+import { useToast } from '@/store/toast'
 import PaymentModal from '@/features/payments/components/PaymentModal'
 import { EmptyState, StatusBadge, MetricCard } from '@/components/shared'
+import { SkeletonList } from '@/components/Skeleton'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { Payment } from '@/services/db'
 
@@ -21,6 +23,8 @@ export default function PaymentsPage() {
   const { data: projects = [] } = useProjects()
   const markAsPaid = useMarkAsPaid()
   const deletePayment = useDeletePayment()
+  const restorePayment = useRestoreDeletedPayment()
+  const toast = useToast()
   const [filter, setFilter] = useState<FilterStatus>('all')
   const [modal, setModal] = useState(false)
   const [editing, setEditing] = useState<Payment | null>(null)
@@ -29,7 +33,13 @@ export default function PaymentsPage() {
 
   function handleEdit(p: Payment) { setEditing(p); setModal(true) }
   function handleNew() { setEditing(null); setModal(true) }
-  function handleDelete(id: string) { if (confirm('Remover este pagamento?')) deletePayment.mutate(id) }
+  function handleDelete(p: Payment) {
+    deletePayment.mutate(p.id, {
+      onSuccess: () => toast.info('Pagamento removido.', {
+        action: { label: 'Desfazer', onClick: () => restorePayment.mutate(p) },
+      }),
+    })
+  }
 
   return (
     <div className="max-w-4xl mx-auto animate-fade-in">
@@ -86,10 +96,7 @@ export default function PaymentsPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-16">
-          <div className="w-7 h-7 rounded-full border-2 border-t-transparent animate-spin"
-            style={{ borderColor: 'var(--primary)', borderTopColor: 'transparent' }} />
-        </div>
+        <SkeletonList variant="payment" count={3} />
       ) : filtered.length === 0 ? (
         <EmptyState icon={<CreditCard size={22} />}
           title="Nenhum pagamento"
@@ -192,7 +199,7 @@ export default function PaymentsPage() {
                     <Pencil size={13} /> Editar
                   </button>
                   <div className="w-px" style={{ background: 'var(--border)' }} />
-                  <button onClick={() => handleDelete(p.id)}
+                  <button onClick={() => handleDelete(p)}
                     data-pwa-tap
                     aria-label="Remover"
                     className="px-4 flex items-center justify-center transition-all hover:opacity-70"

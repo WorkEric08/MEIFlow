@@ -62,6 +62,10 @@ export const contractService = {
   async delete(id: string): Promise<void> {
     await db.contracts.delete(id)
   },
+
+  async restoreDeleted(contract: Contract): Promise<void> {
+    await db.contracts.put(contract)
+  },
 }
 
 // ─── Hooks ─────────────────────────────────────────────────────
@@ -123,6 +127,14 @@ export function useDeleteContract() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => contractService.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: CONTRACTS_KEY }),
+  })
+}
+
+export function useRestoreDeletedContract() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (contract: Contract) => contractService.restoreDeleted(contract),
     onSuccess: () => qc.invalidateQueries({ queryKey: CONTRACTS_KEY }),
   })
 }

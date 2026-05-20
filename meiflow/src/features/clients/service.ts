@@ -5,7 +5,13 @@ import type { ClientFormValues } from './schemas'
 
 export const clientService = {
   async list(): Promise<Client[]> {
-    return db.clients.orderBy('name').toArray()
+    const all = await db.clients.orderBy('name').toArray()
+    return all.filter((c) => !c.archivedAt)
+  },
+
+  async listArchived(): Promise<Client[]> {
+    const all = await db.clients.orderBy('name').toArray()
+    return all.filter((c) => !!c.archivedAt)
   },
 
   async get(id: string): Promise<Client | undefined> {
@@ -25,6 +31,22 @@ export const clientService = {
     const updated: Client = { ...existing, ...data, updatedAt: new Date() }
     await db.clients.put(updated)
     return updated
+  },
+
+  async archive(id: string): Promise<void> {
+    const existing = await db.clients.get(id)
+    if (!existing) return
+    await db.clients.put({ ...existing, archivedAt: new Date(), updatedAt: new Date() })
+  },
+
+  async unarchive(id: string): Promise<void> {
+    const existing = await db.clients.get(id)
+    if (!existing) return
+    await db.clients.put({ ...existing, archivedAt: undefined, updatedAt: new Date() })
+  },
+
+  async restoreDeleted(client: Client): Promise<void> {
+    await db.clients.put(client)
   },
 
   async delete(id: string): Promise<void> {

@@ -14,6 +14,7 @@ export interface Client extends BaseEntity {
   phone?: string
   company?: string
   notes?: string
+  archivedAt?: Date
 }
 
 // ─── Project ───────────────────────────────────────────────────
@@ -27,6 +28,7 @@ export interface Project extends BaseEntity {
   status: ProjectStatus
   startDate: string
   endDate?: string
+  archivedAt?: Date
 }
 
 // ─── Payment ───────────────────────────────────────────────────
@@ -100,10 +102,14 @@ export class MeiFlowDB extends Dexie {
       linkPages: 'id, username, createdAt',
     })
 
-    // v2 — campos extras do cartão de visitas (role/phone/email/city/website).
-    // Migration transparente: campos novos são opcionais, registros antigos seguem válidos.
     this.version(2).stores({
       linkPages: 'id, username, createdAt',
+    })
+
+    // v3 — archivedAt para clientes e projetos (soft-delete / arquivamento).
+    this.version(3).stores({
+      clients:  'id, createdAt, updatedAt, name, email, archivedAt',
+      projects: 'id, clientId, createdAt, updatedAt, status, startDate, archivedAt',
     })
   }
 }

@@ -1,37 +1,58 @@
 import { useState } from 'react'
-import { Users, Plus, Pencil, Trash2, Search, ChevronRight, X } from 'lucide-react'
-import { useClients, useDeleteClient } from '@/features/clients/hooks'
+import { Users, Plus, Pencil, Archive, ArchiveRestore, Search, ChevronRight, X } from 'lucide-react'
+import {
+  useClients, useArchivedClients, useArchiveClient, useUnarchiveClient,
+} from '@/features/clients/hooks'
+import { useToast } from '@/store/toast'
 import ClientModal from '@/features/clients/components/ClientModal'
 import ClientDetail from '@/features/clients/components/ClientDetail'
 import ProjectModal from '@/features/projects/components/ProjectModal'
 import PaymentModal from '@/features/payments/components/PaymentModal'
 import { EmptyState } from '@/components/shared'
+import { SkeletonList } from '@/components/Skeleton'
 import type { Client } from '@/services/db'
 
 export default function ClientsPage() {
   const { data: clients = [], isLoading } = useClients()
-  const deleteClient = useDeleteClient()
+  const { data: archived = [], isLoading: loadingArchived } = useArchivedClients()
+  const archiveClient = useArchiveClient()
+  const unarchiveClient = useUnarchiveClient()
+  const toast = useToast()
+
   const [search, setSearch] = useState('')
+  const [showArchived, setShowArchived] = useState(false)
   const [modal, setModal] = useState(false)
   const [editing, setEditing] = useState<Client | null>(null)
+  const [detail, setDetail] = useState<Client | null>(null)
+  const [projectModal, setProjectModal] = useState(false)
+  const [paymentModal, setPaymentModal] = useState(false)
 
-  const filtered = clients.filter((c) =>
+  const list = showArchived ? archived : clients
+  const filtered = list.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     c.email.toLowerCase().includes(search.toLowerCase()) ||
     (c.company ?? '').toLowerCase().includes(search.toLowerCase())
   )
 
-  const [detail, setDetail] = useState<Client | null>(null)
-  const [projectModal, setProjectModal] = useState(false)
-  const [paymentModal, setPaymentModal] = useState(false)
+  function handleNew() { setEditing(null); setModal(true) }
+  function handleEdit(c: Client) { setEditing(c); setModal(true) }
 
-  function handleNew() {
-    setEditing(null)
-    setModal(true)
+  function handleArchive(c: Client) {
+    archiveClient.mutate(c.id, {
+      onSuccess: () => toast.info(`${c.name} arquivado.`, {
+        action: { label: 'Desfazer', onClick: () => unarchiveClient.mutate(c.id) },
+      }),
+    })
   }
 
-  function handleEdit(c: Client) { setEditing(c); setModal(true) }
-  function handleDelete(id: string) { if (confirm('Remover este cliente?')) deleteClient.mutate(id) }
+  function handleUnarchive(c: Client) {
+    unarchiveClient.mutate(c.id, {
+      onSuccess: () => toast.success(`${c.name} restaurado.`),
+    })
+  }
+
+
+  const loading = showArchived ? loadingArchived : isLoading
 
   return (
     <div className="max-w-4xl mx-auto animate-fade-in">
@@ -40,30 +61,42 @@ export default function ClientsPage() {
         <div className="min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <Users size={20} style={{ color: 'var(--primary)' }} />
-            <h1 className="text-2xl sm:text-h2 font-bold leading-tight"
-              style={{ color: 'var(--text-primary)' }}>
+            <h1 className="text-2xl sm:text-h2 font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
               Clientes
             </h1>
           </div>
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
             {clients.length} cadastrado{clients.length !== 1 ? 's' : ''}
+            {archived.length > 0 && ` · ${archived.length} arquivado${archived.length !== 1 ? 's' : ''}`}
           </p>
         </div>
-        <button onClick={handleNew}
-          data-pwa-tap
-          aria-label="Novo cliente"
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-input text-sm font-semibold text-white transition-all hover:opacity-90 shrink-0 min-h-[44px]"
-          style={{ background: 'var(--primary)' }}>
-          <Plus size={16} />
-          <span className="hidden xs:inline">Novo</span>
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => { setShowArchived((v) => !v); setSearch('') }}
+            title={showArchived ? 'Ver ativos' : 'Ver arquivados'}
+            className="p-2.5 rounded-input border transition-all hover:opacity-80 min-h-[40px] min-w-[40px] flex items-center justify-center"
+            style={{
+              borderColor: showArchived ? 'var(--primary)' : 'var(--border)',
+              color: showArchived ? 'var(--primary)' : 'var(--text-secondary)',
+              background: showArchived ? 'var(--primary-subtle)' : 'var(--bg-1)',
+            }}
+          >
+            <Archive size={15} />
+          </button>
+          <button onClick={handleNew} data-pwa-tap aria-label="Novo cliente"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-input text-sm font-semibold text-white transition-all hover:opacity-90 min-h-[44px]"
+            style={{ background: 'var(--primary)' }}>
+            <Plus size={16} />
+            <span className="hidden xs:inline">Novo</span>
+          </button>
+        </div>
       </div>
 
       {/* ── Busca ── */}
       <div className="relative mb-4">
         <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-tertiary)' }} />
         <input value={search} onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar nome, e-mail ou empresa…"
+          placeholder={showArchived ? 'Buscar arquivados…' : 'Buscar nome, e-mail ou empresa…'}
           className="w-full pl-10 pr-10 py-3 rounded-input text-sm border outline-none transition-all"
           style={{ background: 'var(--bg-1)', color: 'var(--text-primary)', borderColor: 'var(--border)' }} />
         {search && (
@@ -75,67 +108,71 @@ export default function ClientsPage() {
         )}
       </div>
 
-      {isLoading ? (
-        <div className="flex justify-center py-16">
-          <div className="w-7 h-7 rounded-full border-2 border-t-transparent animate-spin"
-            style={{ borderColor: 'var(--primary)', borderTopColor: 'transparent' }} />
+      {showArchived && (
+        <div className="mb-3 px-3 py-2 rounded-input text-xs font-medium flex items-center gap-2"
+          style={{ background: 'var(--primary-subtle)', color: 'var(--primary)' }}>
+          <Archive size={13} />
+          Mostrando clientes arquivados
         </div>
+      )}
+
+      {loading ? (
+        <SkeletonList variant="client" count={3} />
       ) : filtered.length === 0 ? (
-        <EmptyState icon={<Users size={22} />}
-          title={search ? 'Nenhum resultado' : 'Nenhum cliente ainda'}
-          description={search ? 'Tente outro termo de busca.' : 'Cadastre seu primeiro cliente para começar a organizar.'}
-          action={!search ? (
-            <button onClick={handleNew}
-              data-pwa-tap
+        <EmptyState
+          icon={<Users size={22} />}
+          title={search ? 'Nenhum resultado' : showArchived ? 'Nenhum cliente arquivado' : 'Nenhum cliente ainda'}
+          description={search ? 'Tente outro termo.' : showArchived ? 'Arquivos aparecerão aqui.' : 'Cadastre seu primeiro cliente para começar.'}
+          action={!search && !showArchived ? (
+            <button onClick={handleNew} data-pwa-tap
               className="flex items-center gap-2 px-5 py-2.5 rounded-input text-sm font-semibold text-white"
               style={{ background: 'var(--primary)' }}>
               <Plus size={15} /> Novo cliente
             </button>
-          ) : undefined} />
+          ) : undefined}
+        />
       ) : (
         <div className="flex flex-col gap-2.5">
           {filtered.map((c) => (
-            <div key={c.id}
-              className="group rounded-card border overflow-hidden transition-all"
+            <div key={c.id} className="group rounded-card border overflow-hidden transition-all"
               style={{ background: 'var(--bg-1)', borderColor: 'var(--border)' }}>
-              <button
-                onClick={() => setDetail(c)}
-                data-pwa-tap
-                className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
-              >
+              <button onClick={() => !showArchived && setDetail(c)} data-pwa-tap
+                className="w-full flex items-center gap-3 px-4 py-3.5 text-left">
                 <div className="w-11 h-11 rounded-full flex items-center justify-center font-bold text-base shrink-0"
                   style={{ background: 'var(--primary-subtle)', color: 'var(--primary)' }}>
                   {c.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
-                    {c.name}
-                  </p>
-                  <p className="text-xs truncate mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
-                    {c.email}
-                  </p>
+                  <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{c.name}</p>
+                  <p className="text-xs truncate mt-0.5" style={{ color: 'var(--text-tertiary)' }}>{c.email}</p>
                   {c.company && (
-                    <p className="text-xs truncate mt-0.5 font-medium" style={{ color: 'var(--text-secondary)' }}>
-                      {c.company}
-                    </p>
+                    <p className="text-xs truncate mt-0.5 font-medium" style={{ color: 'var(--text-secondary)' }}>{c.company}</p>
                   )}
                 </div>
                 <ChevronRight size={18} className="shrink-0" style={{ color: 'var(--text-tertiary)' }} />
               </button>
               <div className="flex items-stretch border-t" style={{ borderColor: 'var(--border)' }}>
-                <button onClick={() => handleEdit(c)}
-                  data-pwa-tap
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all hover:opacity-70"
-                  style={{ color: 'var(--text-secondary)' }}>
-                  <Pencil size={13} /> Editar
-                </button>
-                <div className="w-px" style={{ background: 'var(--border)' }} />
-                <button onClick={() => handleDelete(c.id)}
-                  data-pwa-tap
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all hover:opacity-70"
-                  style={{ color: 'var(--status-overdue)' }}>
-                  <Trash2 size={13} /> Remover
-                </button>
+                {showArchived ? (
+                  <button onClick={() => handleUnarchive(c)} data-pwa-tap
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all hover:opacity-70"
+                    style={{ color: 'var(--primary)' }}>
+                    <ArchiveRestore size={13} /> Restaurar
+                  </button>
+                ) : (
+                  <>
+                    <button onClick={() => handleEdit(c)} data-pwa-tap
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all hover:opacity-70"
+                      style={{ color: 'var(--text-secondary)' }}>
+                      <Pencil size={13} /> Editar
+                    </button>
+                    <div className="w-px" style={{ background: 'var(--border)' }} />
+                    <button onClick={() => handleArchive(c)} data-pwa-tap
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all hover:opacity-70"
+                      style={{ color: 'var(--text-secondary)' }}>
+                      <Archive size={13} /> Arquivar
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           ))}
@@ -149,8 +186,8 @@ export default function ClientsPage() {
         <ClientDetail
           client={detail}
           onClose={() => setDetail(null)}
-          onNewProject={() => { setProjectModal(true) }}
-          onNewPayment={() => { setPaymentModal(true) }}
+          onNewProject={() => setProjectModal(true)}
+          onNewPayment={() => setPaymentModal(true)}
         />
       )}
     </div>

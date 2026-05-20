@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FileText, Plus, Eye, Trash2, Send, Calendar, Search, Pencil, X } from 'lucide-react'
-import { useContracts, useDeleteContract, useSendContract } from '@/features/contracts/index'
+import { useContracts, useDeleteContract, useSendContract, useRestoreDeletedContract } from '@/features/contracts/index'
 import { useClients } from '@/features/clients/hooks'
+import { useToast } from '@/store/toast'
 import ContractModal from '@/features/contracts/components/ContractModal'
 import ContractViewer from '@/features/contracts/components/ContractViewer'
-import { ConfirmModal } from '@/components/ConfirmModal'
 import { EmptyState, StatusBadge } from '@/components/shared'
+import { SkeletonList } from '@/components/Skeleton'
 import { formatDate } from '@/lib/utils'
 import type { Contract, ContractStatus } from '@/services/db'
 import { cn } from '@/lib/utils'
@@ -32,13 +33,14 @@ export default function ContractsPage() {
   const { data: contracts = [], isLoading } = useContracts()
   const { data: clients = [] } = useClients()
   const deleteContract = useDeleteContract()
+  const restoreContract = useRestoreDeletedContract()
   const sendContract = useSendContract()
+  const toast = useToast()
 
   const [createModal, setCreateModal] = useState(false)
   const [viewing, setViewing] = useState<Contract | null>(null)
   const [filter, setFilter] = useState<Filter>('all')
   const [query, setQuery] = useState('')
-  const [confirmDelete, setConfirmDelete] = useState<Contract | null>(null)
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -61,6 +63,14 @@ export default function ContractsPage() {
 
   function handleEdit(contract: Contract) {
     navigate(`/contracts/${contract.id}/edit`)
+  }
+
+  function handleDelete(contract: Contract) {
+    deleteContract.mutate(contract.id, {
+      onSuccess: () => toast.info(`"${contract.title}" removido.`, {
+        action: { label: 'Desfazer', onClick: () => restoreContract.mutate(contract) },
+      }),
+    })
   }
 
   return (
@@ -138,10 +148,7 @@ export default function ContractsPage() {
       )}
 
       {isLoading ? (
-        <div className="flex justify-center py-16">
-          <div className="w-7 h-7 rounded-full border-2 border-t-transparent animate-spin"
-            style={{ borderColor: 'var(--primary)', borderTopColor: 'transparent' }} />
-        </div>
+        <SkeletonList variant="generic" count={3} />
       ) : contracts.length === 0 ? (
         <EmptyState icon={<FileText size={22} />}
           title="Nenhum contrato ainda"
@@ -269,7 +276,7 @@ export default function ContractsPage() {
 
                   <div className="w-px" style={{ background: 'var(--border)' }} />
                   <button
-                    onClick={() => setConfirmDelete(c)}
+                    onClick={() => handleDelete(c)}
                     data-pwa-tap
                     aria-label="Remover"
                     className="px-4 flex items-center justify-center transition-all hover:opacity-70"
@@ -286,18 +293,6 @@ export default function ContractsPage() {
 
       <ContractModal open={createModal} onClose={() => setCreateModal(false)} />
       {viewing && <ContractViewer contract={viewing} onClose={() => setViewing(null)} />}
-      <ConfirmModal
-        open={!!confirmDelete}
-        title="Remover contrato?"
-        description={confirmDelete ? `O contrato "${confirmDelete.title}" será removido. Esta ação não pode ser desfeita.` : ''}
-        confirmLabel="Remover"
-        cancelLabel="Cancelar"
-        onConfirm={() => {
-          if (confirmDelete) deleteContract.mutate(confirmDelete.id)
-          setConfirmDelete(null)
-        }}
-        onCancel={() => setConfirmDelete(null)}
-      />
     </div>
   )
 }

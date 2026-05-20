@@ -50,6 +50,10 @@ export const paymentService = {
     await db.payments.delete(id)
   },
 
+  async restoreDeleted(payment: import('@/services/db').Payment): Promise<void> {
+    await db.payments.put(payment)
+  },
+
   async updateOverdue(): Promise<void> {
     const STORAGE_KEY = 'meiflow-overdue-check'
     const today = new Date().toISOString().slice(0, 10)
@@ -105,4 +109,12 @@ export function useMarkAsPaid() {
 export function useDeletePayment() {
   const qc = useQueryClient()
   return useMutation({ mutationFn: (id: string) => paymentService.delete(id), onSuccess: () => qc.invalidateQueries({ queryKey: PAYMENTS_KEY }) })
+}
+
+export function useRestoreDeletedPayment() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (payment: import('@/services/db').Payment) => paymentService.restoreDeleted(payment),
+    onSuccess: () => qc.invalidateQueries({ queryKey: PAYMENTS_KEY }),
+  })
 }

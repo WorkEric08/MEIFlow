@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Check, Loader2, Printer, FileText } from 'lucide-react'
 import RichTextEditor, { type VariableOption } from '@/components/RichTextEditor'
@@ -14,6 +14,7 @@ import {
 import { renderMarkdown } from '@/features/contracts/markdown'
 import { CONTRACT_TEMPLATES, interpolate } from '@/features/contracts/templates'
 import { useProfileStore } from '@/store/profile'
+import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
 const AUTOSAVE_DEBOUNCE_MS = 800
@@ -156,6 +157,9 @@ export default function ContractEditor() {
       setIsSaving(false)
     }
   }
+
+  const saveCallback = useCallback(() => handleSave(), [canSave, contractId, title, content, clientId, projectId]) // eslint-disable-line react-hooks/exhaustive-deps
+  useKeyboardShortcut({ key: 's', ctrlOrMeta: true, onTrigger: saveCallback, enabled: initializedRef.current })
 
   function handleBack() {
     navigate('/contracts')
