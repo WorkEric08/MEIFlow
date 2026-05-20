@@ -145,10 +145,21 @@ export default function LinkPageEditor() {
         </div>
         {page && (
           <button
-            onClick={() => navigate(`/${page.username}`)}
+            onClick={() => {
+              if (isDirty) {
+                handleSubmit((values) => {
+                  upsert.mutate(values, {
+                    onSuccess: () => navigate(`/${values.username || page.username}`),
+                  })
+                })()
+              } else {
+                navigate(`/${page.username}`)
+              }
+            }}
             className="flex items-center gap-2 px-4 py-2 rounded-input border text-sm font-medium transition-all duration-fast hover:opacity-80"
             style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
-            <ExternalLink size={14} /> Ver página
+            <ExternalLink size={14} />
+            {isDirty ? 'Salvar e ver' : 'Ver página'}
           </button>
         )}
       </div>
