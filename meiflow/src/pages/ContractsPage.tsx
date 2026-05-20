@@ -60,7 +60,7 @@ export default function ContractsPage() {
   function handleCopyLink(contract: Contract) {
     if (contract.status === 'draft') sendContract.mutate(contract.id)
     const url = `${window.location.origin}/contract/${contract.slug}`
-    navigator.clipboard.writeText(url).then(() => alert(`Link copiado!\n\n${url}`))
+    navigator.clipboard.writeText(url).then(() => toast.success('Link copiado!'))
   }
 
   function handleEdit(contract: Contract) {

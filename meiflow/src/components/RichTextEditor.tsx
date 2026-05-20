@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useEditor, EditorContent, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
@@ -75,9 +76,105 @@ export default function RichTextEditor({
   )
 }
 
+// ─── Link dialog ────────────────────────────────────────────────
+function LinkDialog({ open, initial, onConfirm, onRemove, onClose }: {
+  open: boolean
+  initial: string
+  onConfirm: (url: string) => void
+  onRemove: () => void
+  onClose: () => void
+}) {
+  const [value, setValue] = useState(initial)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (open) { setValue(initial); setTimeout(() => inputRef.current?.focus(), 40) }
+  }, [open, initial])
+
+  useEffect(() => {
+    if (!open) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') { e.stopPropagation(); onClose() }
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  }, [open, onClose])
+
+  if (!open) return null
+
+  function handleConfirm() {
+    const trimmed = value.trim()
+    if (!trimmed) { onRemove(); return }
+    onConfirm(trimmed)
+  }
+
+  return createPortal(
+    <div className="fixed inset-0 z-[10001] flex items-center justify-center px-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="relative z-10 w-full max-w-sm rounded-2xl border shadow-2xl animate-fade-in"
+        style={{ background: 'var(--bg-1)', borderColor: 'var(--border)' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-5 pt-5 pb-4">
+          <p className="text-sm font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
+            Inserir link
+          </p>
+          <input
+            ref={inputRef}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleConfirm() } }}
+            placeholder="https://exemplo.com"
+            className="w-full px-3 py-2.5 rounded-input border text-sm outline-none"
+            style={{
+              background: 'var(--bg-2)',
+              borderColor: 'var(--border)',
+              color: 'var(--text-primary)',
+              fontSize: '16px',
+            }}
+          />
+        </div>
+        <div className="flex gap-2 px-5 pb-5">
+          {initial && (
+            <button
+              type="button"
+              onClick={onRemove}
+              className="px-3 py-2 rounded-input text-sm border transition-all hover:opacity-80"
+              style={{ borderColor: 'var(--border)', color: 'var(--status-overdue)' }}
+            >
+              Remover
+            </button>
+          )}
+          <div className="flex-1" />
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-3 py-2 rounded-input text-sm border transition-all hover:opacity-80"
+            style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirm}
+            className="px-4 py-2 rounded-input text-sm font-semibold text-white transition-all hover:opacity-90"
+            style={{ background: 'var(--primary)' }}
+          >
+            Salvar
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
 // ─── Toolbar ─────────────────────────────────────────────────────
 function Toolbar({ editor, variables }: { editor: Editor; variables: VariableOption[] }) {
   const [varsOpen, setVarsOpen] = useState(false)
+  const [linkOpen, setLinkOpen] = useState(false)
+  const [linkInitial, setLinkInitial] = useState('')
   const varsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -96,13 +193,18 @@ function Toolbar({ editor, variables }: { editor: Editor; variables: VariableOpt
 
   function addLink() {
     const prev = editor.getAttributes('link').href as string | undefined
-    const url = window.prompt('Endereço do link', prev ?? 'https://')
-    if (url === null) return
-    if (url === '') {
-      editor.chain().focus().extendMarkRange('link').unsetLink().run()
-      return
-    }
+    setLinkInitial(prev ?? '')
+    setLinkOpen(true)
+  }
+
+  function applyLink(url: string) {
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+    setLinkOpen(false)
+  }
+
+  function removeLink() {
+    editor.chain().focus().extendMarkRange('link').unsetLink().run()
+    setLinkOpen(false)
   }
 
   return (
@@ -242,6 +344,14 @@ function Toolbar({ editor, variables }: { editor: Editor; variables: VariableOpt
       <div
         className="sm:hidden sticky right-0 top-0 bottom-0 w-6 shrink-0 pointer-events-none self-stretch"
         style={{ background: 'linear-gradient(to right, transparent, var(--bg-1))' }}
+      />
+
+      <LinkDialog
+        open={linkOpen}
+        initial={linkInitial}
+        onConfirm={applyLink}
+        onRemove={removeLink}
+        onClose={() => setLinkOpen(false)}
       />
     </div>
   )

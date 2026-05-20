@@ -5,6 +5,7 @@ import { Modal, StatusBadge } from '@/components/shared'
 import { useSendContract } from '../index'
 import { useClients } from '@/features/clients/hooks'
 import { useProjects } from '@/features/projects/hooks'
+import { useToast } from '@/store/toast'
 import { formatDate } from '@/lib/utils'
 import type { Contract } from '@/services/db'
 
@@ -61,6 +62,7 @@ export default function ContractViewer({ contract, onClose }: Props) {
   const { data: clients = [] } = useClients()
   const { data: projects = [] } = useProjects()
   const sendContract = useSendContract()
+  const toast = useToast()
   const styleRef = useRef<HTMLStyleElement | null>(null)
 
   const client = clients.find((c) => c.id === contract.clientId)
@@ -79,7 +81,7 @@ export default function ContractViewer({ contract, onClose }: Props) {
   function handleSend() {
     if (contract.status === 'draft') sendContract.mutate(contract.id)
     const url = `${window.location.origin}/contract/${contract.slug}`
-    navigator.clipboard.writeText(url).then(() => alert(`Link copiado!\n\n${url}`))
+    navigator.clipboard.writeText(url).then(() => toast.success('Link copiado!'))
   }
 
   const html = contract.content.trimStart().startsWith('<')
