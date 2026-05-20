@@ -1,7 +1,6 @@
-import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { ExternalLink, MapPin, Phone, Mail, Globe, ArrowLeft, Share2, Download } from 'lucide-react'
+import { ExternalLink, MapPin, Phone, Mail, Globe } from 'lucide-react'
 import { linkPageService } from '@/features/link-page/service'
 
 const TOKENS = {
@@ -40,8 +39,6 @@ function buildContactItems(page: { city?: string; phone?: string; email?: string
 
 export default function LinkPagePublic() {
   const { username } = useParams<{ username: string }>()
-  const navigate = useNavigate()
-  const [copied, setCopied] = useState(false)
 
   const { data: page, isLoading } = useQuery({
     queryKey: ['link-page-public', username],
@@ -74,17 +71,6 @@ export default function LinkPagePublic() {
   const isHorizontal = (page.layout ?? 'vertical') === 'horizontal'
 
   function handleLinkClick(linkId: string) { linkPageService.incrementClick(linkId) }
-
-  async function handleShare() {
-    const url = `${window.location.origin}/${page!.username}`
-    if (navigator.share) {
-      try { await navigator.share({ title: page!.displayName, url }) } catch { /* cancelled */ }
-    } else {
-      await navigator.clipboard.writeText(url)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }
-  }
 
   // ── Blocos reutilizados nos dois layouts ─────────────────────────
 
@@ -276,7 +262,7 @@ export default function LinkPagePublic() {
 
   return (
     <div
-      className="h-dvh flex flex-col items-center justify-center px-4 py-6 relative overflow-hidden"
+      className="h-dvh flex flex-col items-center justify-center px-3 py-3 sm:px-5 sm:py-5 relative overflow-hidden"
       id="link-page-root"
       style={{
         background: t.bg0,
@@ -285,49 +271,17 @@ export default function LinkPagePublic() {
         ['--blueprint' as string]: accent,
       }}
     >
-      <div className={`w-full ${containerMaxW} h-full flex flex-col justify-center min-h-0`}>
-        {/* Botão Voltar */}
-        <div className="flex-none mb-4">
-          <button
-            onClick={() => navigate('/link-page')}
-            className="no-print inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all duration-fast hover:opacity-80 active:scale-95 rounded-input border"
-            style={{ background: t.bg1, borderColor: t.blueprintBorder, color: t.textSecondary, boxShadow: t.cardShadow }}
-          >
-            <ArrowLeft size={14} />
-            Voltar
-          </button>
-        </div>
+      {/* Grid blueprint de fundo */}
+      <div className="absolute inset-0 pointer-events-none opacity-50"
+        style={{
+          backgroundImage: `linear-gradient(${t.blueprintGridStrong} 1px, transparent 1px), linear-gradient(90deg, ${t.blueprintGridStrong} 1px, transparent 1px)`,
+          backgroundSize: '32px 32px',
+        }}
+      />
 
-        {/* Grid blueprint de fundo */}
-        <div className="absolute inset-0 pointer-events-none opacity-50"
-          style={{
-            backgroundImage: `linear-gradient(${t.blueprintGridStrong} 1px, transparent 1px), linear-gradient(90deg, ${t.blueprintGridStrong} 1px, transparent 1px)`,
-            backgroundSize: '32px 32px',
-          }}
-        />
-
-        {/* Cartão */}
-        <div className="flex-1 min-h-0 flex flex-col justify-center mt-2">
-          {isHorizontal ? HorizontalCard : VerticalCard}
-        </div>
-
-        {/* Ações */}
-        <div className="flex-none mt-4 flex justify-end gap-2 w-full no-print">
-          <button onClick={handleShare}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-input border text-sm font-medium transition-all duration-fast hover:opacity-80 active:scale-95"
-            style={{ background: t.bg1, borderColor: t.blueprintBorder, color: t.textSecondary, boxShadow: t.cardShadow }}
-            title="Compartilhar link">
-            <Share2 size={14} />
-            {copied ? 'Copiado!' : 'Compartilhar'}
-          </button>
-          <button onClick={() => window.print()}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-input border text-sm font-medium transition-all duration-fast hover:opacity-80 active:scale-95"
-            style={{ background: t.bg1, borderColor: t.blueprintBorder, color: t.textSecondary, boxShadow: t.cardShadow }}
-            title="Baixar como PDF">
-            <Download size={14} />
-            PDF
-          </button>
-        </div>
+      {/* Cartão ocupa todo o espaço disponível */}
+      <div className={`relative w-full ${containerMaxW} h-full flex flex-col min-h-0`}>
+        {isHorizontal ? HorizontalCard : VerticalCard}
       </div>
     </div>
   )
