@@ -23,6 +23,24 @@ interface Props {
   onNativePrint?: () => void
 }
 
+/**
+ * Prefixa cada seletor de um bloco CSS com um wrapper, evitando vazamento de
+ * estilos para o resto da página enquanto o modal está aberto.
+ * Suporta seletores múltiplos separados por vírgula e ignora at-rules (@media).
+ */
+function scopeStyles(css: string, scope: string): string {
+  // Remove comentários simples
+  const clean = css.replace(/\/\*[\s\S]*?\*\//g, '')
+  // Casa blocos "selector { ... }" — selector não pode começar com @
+  return clean.replace(/([^{}@]+)\{([^}]*)\}/g, (_match, selectors: string, body: string) => {
+    const scoped = selectors
+      .split(',')
+      .map((s) => `${scope} ${s.trim()}`)
+      .join(', ')
+    return `${scoped} { ${body.trim()} }`
+  })
+}
+
 export default function PdfPreviewModal({
   open, onClose, title, contentHtml, documentStyles, onNativePrint,
 }: Props) {
@@ -125,20 +143,29 @@ export default function PdfPreviewModal({
 
   return createPortal(
     <>
-      {/* Documento offscreen — usado apenas pelo html2pdf como fonte da renderização */}
-      <div style={{
-        position: 'fixed',
-        left: '-99999px',
-        top: 0,
-        width: '794px', // ~A4 width em px (210mm @ 96dpi)
-        background: '#ffffff',
-        color: '#0D1117',
-        fontFamily: "Georgia, 'Times New Roman', serif",
-        padding: '48px 56px',
-        pointerEvents: 'none',
-      }}>
-        {documentStyles && <style>{documentStyles}</style>}
-        <div ref={sourceRef} dangerouslySetInnerHTML={{ __html: contentHtml }} />
+      {/* Documento offscreen — usado pelo html2pdf como fonte da renderização.
+          ATENÇÃO: o ref precisa estar no elemento estilizado (não no filho),
+          pois o html2pdf captura exatamente o nó referenciado. */}
+      <div
+        ref={sourceRef}
+        className="meiflow-pdf-source"
+        style={{
+          position: 'fixed',
+          left: '-99999px',
+          top: 0,
+          width: '794px', // ~A4 width em px (210mm @ 96dpi)
+          background: '#ffffff',
+          color: '#0D1117',
+          fontFamily: "Georgia, 'Times New Roman', serif",
+          padding: '24px',
+          pointerEvents: 'none',
+        }}
+      >
+        {documentStyles && (
+          // Escopa as regras dentro de .meiflow-pdf-source pra não vazarem
+          <style>{scopeStyles(documentStyles, '.meiflow-pdf-source')}</style>
+        )}
+        <div dangerouslySetInnerHTML={{ __html: contentHtml }} />
       </div>
 
       {/* Modal */}
