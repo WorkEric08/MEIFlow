@@ -1,8 +1,12 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link2, Sun, Moon, ExternalLink, LayoutList, Columns2, Eye, EyeOff } from 'lucide-react'
+import {
+  Link2, User, Palette, Eye, EyeOff, Sun, Moon, LayoutList, Columns2,
+  ExternalLink, Check, Loader2,
+  type LucideIcon,
+} from 'lucide-react'
 import { useLinkPage, useUpsertLinkPage, useReorderLinks } from '@/features/link-page/hooks'
 import { linkPageService } from '@/features/link-page/service'
 import { linkPageSchema } from '@/features/link-page/schemas'
@@ -10,41 +14,123 @@ import LinkCard from '@/features/link-page/components/LinkCard'
 import AddLinkForm from '@/features/link-page/components/AddLinkForm'
 import AccentColorPicker from '@/features/link-page/components/AccentColorPicker'
 import LinkPagePreview from '@/features/link-page/components/LinkPagePreview'
+import { Modal } from '@/components/shared'
 import { useProfileStore } from '@/store/profile'
 import type { LinkPageFormValues } from '@/features/link-page/types'
 
+const AUTOSAVE_DEBOUNCE_MS = 800
+
+// ─── Helpers ────────────────────────────────────────────────────
 function formatPhone(value: string): string {
-  // Extrai apenas dígitos, limitado a 11 (DDD + 9 + 8)
   const digits = value.replace(/\D/g, '').slice(0, 11)
   if (!digits) return ''
-
-  // Auto-insere o 9 após o DDD se o usuário não colocar
   let d = digits
-  if (d.length > 2 && d[2] !== '9') {
-    d = (d.slice(0, 2) + '9' + d.slice(2)).slice(0, 11)
-  }
-
+  if (d.length > 2 && d[2] !== '9') d = (d.slice(0, 2) + '9' + d.slice(2)).slice(0, 11)
   const ddd = d.slice(0, 2)
   const nine = d.slice(2, 3)
   const rest = d.slice(3)
-
   if (d.length <= 2) return `(${ddd}`
   if (d.length === 3) return `(${ddd}) ${nine}`
   return `(${ddd}) ${nine} ${rest}`
 }
 
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+const INPUT_CLS = 'w-full px-3 py-2.5 rounded-input text-sm border outline-none transition-all duration-fast'
+const inputStyle = (err?: unknown): React.CSSProperties => ({
+  background: 'var(--bg-2)',
+  color: 'var(--text-primary)',
+  borderColor: err ? 'var(--status-overdue)' : 'var(--border)',
+  fontSize: '16px',
+})
+
+function Field({ label, error, hint, children }: { label: string; error?: string; hint?: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-secondary)' }}>
-        {label}
-      </label>
+      <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-secondary)' }}>{label}</label>
       {children}
+      {hint && !error && <p className="text-[11px] mt-1" style={{ color: 'var(--text-tertiary)' }}>{hint}</p>}
       {error && <p className="text-xs mt-1" style={{ color: 'var(--status-overdue)' }}>{error}</p>}
     </div>
   )
 }
 
+function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
+  return (
+    <section className="p-4 sm:p-6 rounded-card border relative overflow-hidden mb-4"
+      style={{ background: 'var(--bg-1)', borderColor: 'var(--border)' }}>
+      <div className="blueprint-grid absolute inset-0 pointer-events-none" />
+      <div className="relative">
+        <div className="mb-5">
+          <h2 className="text-base font-bold mb-0.5" style={{ color: 'var(--text-primary)' }}>{title}</h2>
+          {description && <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{description}</p>}
+        </div>
+        <div className="flex flex-col gap-4">{children}</div>
+      </div>
+    </section>
+  )
+}
+
+function PillToggle<T extends string | boolean>({
+  options, value, onChange,
+}: {
+  options: { value: T; label: string; icon: LucideIcon }[]
+  value: T
+  onChange: (v: T) => void
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {options.map(({ value: v, label, icon: Icon }) => {
+        const active = value === v
+        return (
+          <button key={String(v)} type="button" data-pwa-tap onClick={() => onChange(v)}
+            className="flex items-center justify-center gap-2 px-4 py-3 rounded-input border text-sm font-semibold transition-all active:scale-[0.98]"
+            style={{
+              background: active ? 'var(--primary-subtle)' : 'var(--bg-2)',
+              borderColor: active ? 'var(--primary)' : 'var(--border)',
+              color: active ? 'var(--primary)' : 'var(--text-secondary)',
+            }}>
+            <Icon size={16} />
+            {label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── Indicador de save ──────────────────────────────────────────
+function SaveStatus({ saving, savedAt }: { saving: boolean; savedAt: Date | null }) {
+  const [recent, setRecent] = useState(false)
+  useEffect(() => {
+    if (!savedAt) return
+    setRecent(true)
+    const t = window.setTimeout(() => setRecent(false), 2200)
+    return () => window.clearTimeout(t)
+  }, [savedAt])
+
+  if (saving) return (
+    <span className="hidden xs:flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
+      <Loader2 size={12} className="animate-spin" />
+      Salvando…
+    </span>
+  )
+  if (recent) return (
+    <span className="hidden xs:flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--status-paid)' }}>
+      <Check size={12} />
+      Salvo
+    </span>
+  )
+  return null
+}
+
+type Tab = 'perfil' | 'aparencia' | 'links'
+
+const TABS: { value: Tab; label: string; icon: LucideIcon }[] = [
+  { value: 'perfil',    label: 'Perfil',    icon: User },
+  { value: 'aparencia', label: 'Aparência', icon: Palette },
+  { value: 'links',     label: 'Links',     icon: Link2 },
+]
+
+// ─── Página ─────────────────────────────────────────────────────
 export default function LinkPageEditor() {
   const navigate = useNavigate()
   const { data: page, isLoading } = useLinkPage()
@@ -52,58 +138,95 @@ export default function LinkPageEditor() {
   const reorderLinks = useReorderLinks()
   const { profile } = useProfileStore()
 
-  // Sincroniza a foto do perfil de Configurações → avatarUrl do cartão automaticamente
+  const [tab, setTab] = useState<Tab>('perfil')
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [savedAt, setSavedAt] = useState<Date | null>(null)
+
+  // Sync foto do perfil → avatarUrl
   useEffect(() => {
     if (!page) return
     const incoming = profile.photo ?? ''
-    const current  = page.avatarUrl ?? ''
-    if (incoming !== current) {
-      linkPageService.upsert({ avatarUrl: incoming || undefined })
-    }
+    const current = page.avatarUrl ?? ''
+    if (incoming !== current) linkPageService.upsert({ avatarUrl: incoming || undefined })
   }, [profile.photo, page?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const { register, handleSubmit, watch, setValue, reset, formState: { errors, isDirty } } =
-    useForm<LinkPageFormValues>({
-      resolver: zodResolver(linkPageSchema),
-      defaultValues: {
-        username: '',
-        displayName: '',
-        role: '',
-        bio: '',
-        phone: '',
-        email: '',
-        city: '',
-        website: '',
-        accentColor: '#3B8CE8',
-        theme: 'dark',
-        showLinks: true,
-        layout: 'vertical',
-      },
-    })
+  const { register, watch, setValue, reset, formState: { errors } } = useForm<LinkPageFormValues>({
+    resolver: zodResolver(linkPageSchema),
+    mode: 'onChange',
+    defaultValues: {
+      username: '', displayName: '', role: '', bio: '',
+      phone: '', email: '', city: '', website: '',
+      accentColor: '#3B8CE8', theme: 'dark',
+      showLinks: true, layout: 'vertical',
+    },
+  })
 
   const watchedValues = watch()
 
+  // ─── Inicialização (apenas uma vez) ───────────────────────────
+  const initRef = useRef(false)
+  const lastSavedRef = useRef<string>('')
+  const debounceRef = useRef<number | undefined>(undefined)
+
   useEffect(() => {
-    if (page) {
-      reset({
-        username: page.username,
-        displayName: page.displayName,
-        role: page.role ?? '',
-        bio: page.bio ?? '',
-        phone: page.phone ?? '',
-        email: page.email ?? '',
-        city: page.city ?? '',
-        website: page.website ?? '',
-        accentColor: page.accentColor,
-        theme: page.theme,
-        showLinks: page.showLinks !== false,
-        layout: page.layout ?? 'vertical',
-      })
+    if (!page || initRef.current) return
+    const values: LinkPageFormValues = {
+      username: page.username,
+      displayName: page.displayName,
+      role: page.role ?? '',
+      bio: page.bio ?? '',
+      phone: page.phone ?? '',
+      email: page.email ?? '',
+      city: page.city ?? '',
+      website: page.website ?? '',
+      accentColor: page.accentColor,
+      theme: page.theme,
+      showLinks: page.showLinks !== false,
+      layout: page.layout ?? 'vertical',
     }
+    reset(values)
+    lastSavedRef.current = JSON.stringify(values)
+    initRef.current = true
   }, [page, reset])
 
-  function onSubmit(values: LinkPageFormValues) { upsert.mutate(values) }
+  // ─── Auto-save com debounce ────────────────────────────────────
+  useEffect(() => {
+    if (!initRef.current) return
+    const parsed = linkPageSchema.safeParse(watchedValues)
+    if (!parsed.success) return
 
+    const serialized = JSON.stringify(parsed.data)
+    if (serialized === lastSavedRef.current) return
+
+    if (debounceRef.current) window.clearTimeout(debounceRef.current)
+    debounceRef.current = window.setTimeout(() => {
+      upsert.mutate(parsed.data, {
+        onSuccess: () => {
+          lastSavedRef.current = serialized
+          setSavedAt(new Date())
+        },
+      })
+    }, AUTOSAVE_DEBOUNCE_MS)
+
+    return () => { if (debounceRef.current) window.clearTimeout(debounceRef.current) }
+  }, [watchedValues]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ─── Ver página: garante save antes de navegar ────────────────
+  async function handleViewPage() {
+    if (!page) return
+    if (debounceRef.current) {
+      window.clearTimeout(debounceRef.current)
+      debounceRef.current = undefined
+    }
+    const parsed = linkPageSchema.safeParse(watchedValues)
+    if (parsed.success && JSON.stringify(parsed.data) !== lastSavedRef.current) {
+      await upsert.mutateAsync(parsed.data)
+      lastSavedRef.current = JSON.stringify(parsed.data)
+    }
+    navigate(`/${watchedValues.username || page.username}?preview=1`)
+  }
+
+  // ─── Drag-and-drop dos links ──────────────────────────────────
   const dragIndex = useRef<number>(-1)
   const overIndex = useRef<number>(-1)
 
@@ -131,192 +254,225 @@ export default function LinkPageEditor() {
     )
   }
 
-  const previewPage = { id: 'preview', createdAt: new Date(), updatedAt: new Date(), links: page?.links ?? [], ...watchedValues }
+  const previewPage = {
+    id: 'preview',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    links: page?.links ?? [],
+    ...watchedValues,
+  }
 
   return (
-    <div className="max-w-5xl mx-auto animate-fade-in">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Link2 size={18} style={{ color: 'var(--primary)' }} aria-hidden />
-            <h1 className="text-h2 font-bold" style={{ color: 'var(--text-primary)' }}>Cartão de Visitas</h1>
+    <div className="-m-4 md:-m-5 lg:-m-6 min-h-[calc(100dvh-56px)] animate-fade-in"
+      style={{ background: 'var(--bg-0)' }}>
+
+      {/* ── Header sticky com título + status + Ver página + abas ── */}
+      <header className="sticky top-0 z-30 backdrop-blur border-b"
+        style={{
+          background: 'color-mix(in srgb, var(--bg-1) 92%, transparent)',
+          borderColor: 'var(--border)',
+          paddingTop: 'env(safe-area-inset-top)',
+        }}>
+        <div className="max-w-5xl mx-auto px-4 sm:px-5 lg:px-6 py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <Link2 size={18} style={{ color: 'var(--primary)' }} className="shrink-0" />
+            <h1 className="text-base sm:text-lg font-bold truncate" style={{ color: 'var(--text-primary)' }}>
+              Cartão de Visitas
+            </h1>
           </div>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Seu cartão digital público de contato e links</p>
+          <div className="flex items-center gap-2 shrink-0">
+            <SaveStatus saving={upsert.isPending} savedAt={savedAt} />
+            <button onClick={handleViewPage} disabled={!page} data-pwa-tap
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-input text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-50 min-h-[38px]"
+              style={{ background: 'var(--primary)' }}>
+              <ExternalLink size={14} />
+              <span className="hidden xs:inline">Ver página</span>
+            </button>
+          </div>
         </div>
-        {page && (
-          <button
-            onClick={() => {
-              if (isDirty) {
-                handleSubmit((values) => {
-                  upsert.mutate(values, {
-                    onSuccess: () => navigate(`/${values.username || page.username}`),
-                  })
-                })()
-              } else {
-                navigate(`/${page.username}`)
-              }
-            }}
-            className="flex items-center gap-2 px-4 py-2 rounded-input border text-sm font-medium transition-all duration-fast hover:opacity-80"
-            style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
-            <ExternalLink size={14} />
-            {isDirty ? 'Salvar e ver' : 'Ver página'}
-          </button>
-        )}
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6">
-        <div className="flex flex-col gap-6">
-          <section className="p-5 rounded-card border relative overflow-hidden"
-            style={{ background: 'var(--bg-1)', borderColor: 'var(--border)' }}>
-            <div className="blueprint-grid absolute inset-0 pointer-events-none" />
-            <div className="relative">
-              <p className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: 'var(--blueprint-text)' }}>Perfil</p>
-              <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Nome de exibição" error={errors.displayName?.message}>
-                    <input {...register('displayName')} onBlur={handleDisplayNameBlur} placeholder="Seu Nome"
-                      className="w-full px-3 py-2 rounded-input text-sm border outline-none transition-all duration-fast"
-                      style={{ background: 'var(--bg-2)', color: 'var(--text-primary)', borderColor: errors.displayName ? 'var(--status-overdue)' : 'var(--border)' }} />
-                  </Field>
-                  <Field label="Username" error={errors.username?.message}>
-                    <div className="flex items-center rounded-input border overflow-hidden"
-                      style={{ borderColor: errors.username ? 'var(--status-overdue)' : 'var(--border)' }}>
-                      <span className="px-3 py-2 text-sm shrink-0" style={{ color: 'var(--text-tertiary)', background: 'var(--bg-1)' }}>meiflow.com/</span>
-                      <input {...register('username')} placeholder="seu-nome"
-                        className="flex-1 px-2 py-2 text-sm outline-none"
-                        style={{ background: 'var(--bg-2)', color: 'var(--text-primary)' }} />
-                    </div>
-                  </Field>
-                </div>
-                <Field label="Bio" error={errors.bio?.message}>
-                  <textarea {...register('bio')} placeholder="Uma frase sobre você (máx. 160 caracteres)" rows={2} maxLength={160}
-                    className="w-full px-3 py-2 rounded-input text-sm border outline-none resize-none transition-all duration-fast"
-                    style={{ background: 'var(--bg-2)', color: 'var(--text-primary)', borderColor: errors.bio ? 'var(--status-overdue)' : 'var(--border)' }} />
+        <div className="max-w-5xl mx-auto px-4 sm:px-5 lg:px-6 pb-2">
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
+            {TABS.map(({ value, label, icon: Icon }) => {
+              const active = tab === value
+              return (
+                <button key={value} type="button" data-pwa-tap onClick={() => setTab(value)}
+                  className="shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-input text-sm font-semibold whitespace-nowrap transition-all"
+                  style={{
+                    background: active ? 'var(--primary-subtle)' : 'transparent',
+                    color: active ? 'var(--primary)' : 'var(--text-secondary)',
+                    border: `1px solid ${active ? 'var(--primary)' : 'transparent'}`,
+                  }}>
+                  <Icon size={14} />
+                  {label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      </header>
+
+      {/* ── Conteúdo + preview ── */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-5 lg:px-6 py-5 sm:py-6 grid lg:grid-cols-[1fr_320px] gap-6">
+
+        <main className="min-w-0">
+          {/* Tab: Perfil */}
+          {tab === 'perfil' && (
+            <Section title="Identidade" description="Como você quer ser apresentado no seu cartão">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field label="Nome de exibição" error={errors.displayName?.message}>
+                  <input {...register('displayName')} onBlur={handleDisplayNameBlur} placeholder="Seu Nome"
+                    className={INPUT_CLS} style={inputStyle(errors.displayName)} />
                 </Field>
-
-                {/* ── Cargo + Cidade ── */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Cargo / Especialidade" error={errors.role?.message}>
-                    <input {...register('role')} placeholder="Desenvolvedor Web Freelancer"
-                      className="w-full px-3 py-2 rounded-input text-sm border outline-none transition-all duration-fast"
-                      style={{ background: 'var(--bg-2)', color: 'var(--text-primary)', borderColor: errors.role ? 'var(--status-overdue)' : 'var(--border)' }} />
-                  </Field>
-                  <Field label="Cidade" error={errors.city?.message}>
-                    <input {...register('city')} placeholder="Itajaí, SC"
-                      className="w-full px-3 py-2 rounded-input text-sm border outline-none transition-all duration-fast"
-                      style={{ background: 'var(--bg-2)', color: 'var(--text-primary)', borderColor: errors.city ? 'var(--status-overdue)' : 'var(--border)' }} />
-                  </Field>
-                </div>
-
-                {/* ── Telefone + E-mail ── */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Telefone" error={errors.phone?.message}>
-                    <input
-                      {...register('phone')}
-                      onChange={(e) => {
-                        setValue('phone', formatPhone(e.target.value), { shouldDirty: true, shouldValidate: false })
-                      }}
-                      placeholder="(00) 0 0000-0000"
-                      inputMode="tel"
-                      className="w-full px-3 py-2 rounded-input text-sm border outline-none transition-all duration-fast"
-                      style={{ background: 'var(--bg-2)', color: 'var(--text-primary)', borderColor: errors.phone ? 'var(--status-overdue)' : 'var(--border)' }}
-                    />
-                  </Field>
-                  <Field label="E-mail de contato" error={errors.email?.message}>
-                    <input {...register('email')} placeholder="contato@exemplo.com" type="email" inputMode="email"
-                      className="w-full px-3 py-2 rounded-input text-sm border outline-none transition-all duration-fast"
-                      style={{ background: 'var(--bg-2)', color: 'var(--text-primary)', borderColor: errors.email ? 'var(--status-overdue)' : 'var(--border)' }} />
-                  </Field>
-                </div>
-
-                {/* ── Website (full width) ── */}
-                <Field label="Website" error={errors.website?.message}>
-                  <input {...register('website')} placeholder="https://meusite.com.br" type="url" inputMode="url"
-                    className="w-full px-3 py-2 rounded-input text-sm border outline-none transition-all duration-fast"
-                    style={{ background: 'var(--bg-2)', color: 'var(--text-primary)', borderColor: errors.website ? 'var(--status-overdue)' : 'var(--border)' }} />
+                <Field label="Username" error={errors.username?.message} hint="Aparece na URL do cartão">
+                  <div className="flex items-center rounded-input border overflow-hidden"
+                    style={{ borderColor: errors.username ? 'var(--status-overdue)' : 'var(--border)' }}>
+                    <span className="px-3 py-2.5 text-sm shrink-0" style={{ color: 'var(--text-tertiary)', background: 'var(--bg-1)' }}>
+                      meiflow.com/
+                    </span>
+                    <input {...register('username')} placeholder="seu-nome"
+                      className="flex-1 px-2 py-2.5 text-sm outline-none min-w-0"
+                      style={{ background: 'var(--bg-2)', color: 'var(--text-primary)', fontSize: '16px' }} />
+                  </div>
                 </Field>
+              </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Cor de destaque">
-                    <AccentColorPicker value={watchedValues.accentColor} onChange={(c) => setValue('accentColor', c, { shouldDirty: true })} />
-                  </Field>
-                  <Field label="Tema da página">
-                    <div className="flex gap-2">
-                      {(['dark', 'light'] as const).map((t) => (
-                        <button key={t} type="button" onClick={() => setValue('theme', t, { shouldDirty: true })}
-                          className="flex items-center gap-2 px-3 py-2 rounded-input border text-sm font-medium transition-all duration-fast"
-                          style={{ background: watchedValues.theme === t ? 'var(--primary-subtle)' : 'var(--bg-2)', borderColor: watchedValues.theme === t ? 'var(--primary)' : 'var(--border)', color: watchedValues.theme === t ? 'var(--primary)' : 'var(--text-secondary)' }}>
-                          {t === 'dark' ? <Moon size={14} /> : <Sun size={14} />}
-                          {t === 'dark' ? 'Escuro' : 'Claro'}
-                        </button>
-                      ))}
-                    </div>
-                  </Field>
-                </div>
+              <Field label="Bio" error={errors.bio?.message} hint="Até 160 caracteres">
+                <textarea {...register('bio')} placeholder="Uma frase sobre você" rows={2} maxLength={160}
+                  className={INPUT_CLS + ' resize-none'} style={inputStyle(errors.bio)} />
+              </Field>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Layout do cartão">
-                    <div className="flex gap-2">
-                      {(['vertical', 'horizontal'] as const).map((l) => (
-                        <button key={l} type="button" onClick={() => setValue('layout', l, { shouldDirty: true })}
-                          className="flex items-center gap-2 px-3 py-2 rounded-input border text-sm font-medium transition-all duration-fast"
-                          style={{ background: watchedValues.layout === l ? 'var(--primary-subtle)' : 'var(--bg-2)', borderColor: watchedValues.layout === l ? 'var(--primary)' : 'var(--border)', color: watchedValues.layout === l ? 'var(--primary)' : 'var(--text-secondary)' }}>
-                          {l === 'vertical' ? <LayoutList size={14} /> : <Columns2 size={14} />}
-                          {l === 'vertical' ? 'Vertical' : 'Horizontal'}
-                        </button>
-                      ))}
-                    </div>
-                  </Field>
-                  <Field label="Links">
-                    <div className="flex gap-2">
-                      {([true, false] as const).map((v) => (
-                        <button key={String(v)} type="button" onClick={() => setValue('showLinks', v, { shouldDirty: true })}
-                          className="flex items-center gap-2 px-3 py-2 rounded-input border text-sm font-medium transition-all duration-fast"
-                          style={{ background: watchedValues.showLinks === v ? 'var(--primary-subtle)' : 'var(--bg-2)', borderColor: watchedValues.showLinks === v ? 'var(--primary)' : 'var(--border)', color: watchedValues.showLinks === v ? 'var(--primary)' : 'var(--text-secondary)' }}>
-                          {v ? <Eye size={14} /> : <EyeOff size={14} />}
-                          {v ? 'Exibir' : 'Ocultar'}
-                        </button>
-                      ))}
-                    </div>
-                  </Field>
-                </div>
-                <div className="flex justify-end">
-                  <button type="submit" disabled={!isDirty || upsert.isPending}
-                    className="px-5 py-2 rounded-input text-sm font-semibold text-white transition-all duration-fast hover:opacity-90 disabled:opacity-40"
-                    style={{ background: 'var(--primary)' }}>
-                    {upsert.isPending ? 'Salvando…' : 'Salvar perfil'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </section>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field label="Cargo / Especialidade" error={errors.role?.message}>
+                  <input {...register('role')} placeholder="Desenvolvedor Web"
+                    className={INPUT_CLS} style={inputStyle(errors.role)} />
+                </Field>
+                <Field label="Cidade" error={errors.city?.message}>
+                  <input {...register('city')} placeholder="Itajaí, SC"
+                    className={INPUT_CLS} style={inputStyle(errors.city)} />
+                </Field>
+              </div>
 
-          <section>
-            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--text-tertiary)' }}>
-              Links ({page?.links.length ?? 0})
-            </p>
-            <div className="flex flex-col gap-2 mb-4">
-              {(page?.links ?? []).map((link, i) => (
-                <LinkCard
-                  key={link.id}
-                  link={link}
-                  accentColor={watchedValues.accentColor}
-                  index={i}
-                  onDragStart={(idx) => { dragIndex.current = idx }}
-                  onDragOver={(idx) => { overIndex.current = idx }}
-                  onDrop={handleDrop}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field label="Telefone" error={errors.phone?.message}>
+                  <input {...register('phone')}
+                    onChange={(e) => setValue('phone', formatPhone(e.target.value), { shouldDirty: true, shouldValidate: false })}
+                    placeholder="(00) 0 0000-0000" inputMode="tel"
+                    className={INPUT_CLS} style={inputStyle(errors.phone)} />
+                </Field>
+                <Field label="E-mail" error={errors.email?.message}>
+                  <input {...register('email')} placeholder="contato@exemplo.com" type="email" inputMode="email"
+                    className={INPUT_CLS} style={inputStyle(errors.email)} />
+                </Field>
+              </div>
+
+              <Field label="Website" error={errors.website?.message}>
+                <input {...register('website')} placeholder="https://meusite.com.br" type="url" inputMode="url"
+                  className={INPUT_CLS} style={inputStyle(errors.website)} />
+              </Field>
+            </Section>
+          )}
+
+          {/* Tab: Aparência */}
+          {tab === 'aparencia' && (
+            <Section title="Aparência" description="Como o cartão é apresentado visualmente">
+              <Field label="Cor de destaque">
+                <AccentColorPicker
+                  value={watchedValues.accentColor}
+                  onChange={(c) => setValue('accentColor', c, { shouldDirty: true })}
                 />
-              ))}
-            </div>
-            <AddLinkForm accentColor={watchedValues.accentColor} />
-          </section>
-        </div>
+              </Field>
 
-        <aside className="lg:sticky lg:top-6 lg:self-start">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--text-tertiary)' }}>Preview</p>
+              <Field label="Tema da página">
+                <PillToggle<'dark' | 'light'>
+                  options={[
+                    { value: 'dark', label: 'Escuro', icon: Moon },
+                    { value: 'light', label: 'Claro', icon: Sun },
+                  ]}
+                  value={watchedValues.theme}
+                  onChange={(v) => setValue('theme', v, { shouldDirty: true })}
+                />
+              </Field>
+
+              <Field label="Layout do cartão">
+                <PillToggle<'vertical' | 'horizontal'>
+                  options={[
+                    { value: 'vertical', label: 'Vertical', icon: LayoutList },
+                    { value: 'horizontal', label: 'Horizontal', icon: Columns2 },
+                  ]}
+                  value={watchedValues.layout}
+                  onChange={(v) => setValue('layout', v, { shouldDirty: true })}
+                />
+              </Field>
+            </Section>
+          )}
+
+          {/* Tab: Links */}
+          {tab === 'links' && (
+            <>
+              <Section title="Exibição dos links" description={watchedValues.showLinks ? 'Os links estão visíveis no cartão' : 'Os links estão ocultos no cartão'}>
+                <PillToggle<boolean>
+                  options={[
+                    { value: true, label: 'Exibir', icon: Eye },
+                    { value: false, label: 'Ocultar', icon: EyeOff },
+                  ]}
+                  value={watchedValues.showLinks}
+                  onChange={(v) => setValue('showLinks', v, { shouldDirty: true })}
+                />
+              </Section>
+
+              <Section
+                title={`Meus links (${page?.links.length ?? 0})`}
+                description={(page?.links.length ?? 0) > 1 ? 'Arraste para reordenar' : 'Adicione um link abaixo'}
+              >
+                {(page?.links.length ?? 0) > 0 && (
+                  <div className="flex flex-col gap-2 mb-2">
+                    {(page?.links ?? []).map((link, i) => (
+                      <LinkCard
+                        key={link.id} link={link}
+                        accentColor={watchedValues.accentColor}
+                        index={i}
+                        onDragStart={(idx) => { dragIndex.current = idx }}
+                        onDragOver={(idx) => { overIndex.current = idx }}
+                        onDrop={handleDrop}
+                      />
+                    ))}
+                  </div>
+                )}
+                <AddLinkForm accentColor={watchedValues.accentColor} />
+              </Section>
+            </>
+          )}
+        </main>
+
+        {/* Preview desktop — sticky lateral */}
+        <aside className="hidden lg:block lg:sticky lg:top-[136px] lg:self-start">
+          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--text-tertiary)' }}>
+            Preview ao vivo
+          </p>
           <LinkPagePreview page={previewPage} />
         </aside>
       </div>
+
+      {/* ── Botão flutuante mobile para abrir o preview ── */}
+      <button onClick={() => setPreviewOpen(true)} data-pwa-tap
+        aria-label="Ver preview do cartão"
+        className="lg:hidden fixed right-4 z-30 flex items-center gap-2 px-4 py-3 rounded-full text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95"
+        style={{
+          background: 'var(--primary)',
+          bottom: 'calc(env(safe-area-inset-bottom) + 80px)',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+        }}>
+        <Eye size={16} />
+        Preview
+      </button>
+
+      {/* ── Sheet mobile com preview ── */}
+      <Modal open={previewOpen} onClose={() => setPreviewOpen(false)} title="Preview ao vivo" size="md">
+        <div className="p-4 sm:p-5 overflow-y-auto" style={{ maxHeight: '70dvh' }}>
+          <LinkPagePreview page={previewPage} />
+        </div>
+      </Modal>
     </div>
   )
 }
