@@ -153,12 +153,12 @@ export default function LinkPagePublic() {
   function renderContactItem(item: { key: ContactKey; label: string; href?: string }) {
     const Icon = CONTACT_ICONS[item.key]
     const inner = (
-      <span className="flex items-center gap-2.5">
-        <span className="w-7 h-7 rounded-input flex items-center justify-center shrink-0 border"
+      <span className="flex items-center gap-2 sm:gap-2.5">
+        <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-input flex items-center justify-center shrink-0 border"
           style={{ background: t.bg2, borderColor: t.blueprintBorder, color: accent }}>
-          <Icon size={13} strokeWidth={2.2} />
+          <Icon size={12} strokeWidth={2.2} />
         </span>
-        <span className="text-sm font-medium truncate min-w-0 flex-1" style={{ color: t.textPrimary }}>
+        <span className="text-[12px] sm:text-sm font-medium truncate min-w-0 flex-1" style={{ color: t.textPrimary }}>
           {item.label}
         </span>
       </span>
@@ -190,14 +190,13 @@ export default function LinkPagePublic() {
       </div>
 
       <div className="relative flex">
-        {/* Coluna esquerda */}
-        <div className={`p-4 sm:p-6 pt-7 sm:pt-8 ${hasLinks ? 'flex-1 min-w-0' : 'w-full'}`}>
+        {/* Coluna esquerda — mais espaço pra contatos no mobile */}
+        <div className={`p-3.5 sm:p-6 pt-7 sm:pt-8 ${hasLinks ? 'flex-1 min-w-0' : 'w-full'}`}>
           {AvatarIdentity}
           {Bio}
           {contacts.length > 0 && (
             <>
               <Separator color={t.blueprintBorder} label="CONTATO" labelColor={t.textTertiary} bg={t.bg1} />
-              {/* Grade de 2 col quando não há links e a tela permite */}
               <ul className={`grid gap-2 sm:gap-2.5 ${!hasLinks ? 'sm:grid-cols-2' : 'grid-cols-1'}`}>
                 {contacts.map(renderContactItem)}
               </ul>
@@ -208,18 +207,19 @@ export default function LinkPagePublic() {
         {hasLinks && (
           <>
             <div className="w-px shrink-0 self-stretch" style={{ background: t.blueprintBorder }} />
-            <div className="w-[148px] sm:w-[200px] shrink-0 p-3.5 sm:p-6 pt-7 sm:pt-8">
+            {/* Coluna direita — proporções equivalentes às do preview (~32% no mobile) */}
+            <div className="w-[112px] sm:w-[180px] shrink-0 p-3 sm:p-6 pt-7 sm:pt-8">
               <Separator color={t.blueprintBorder} label="LINKS" labelColor={t.textTertiary} bg={t.bg1} />
               <div className="flex flex-col gap-1.5 sm:gap-2.5">
                 {page.links.map((link) => (
                   <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer"
                     onClick={() => handleLinkClick(link.id)}
-                    className="w-full flex items-center justify-between px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-input border font-semibold transition-all duration-fast active:scale-[0.98] no-underline"
+                    className="w-full flex items-center justify-between px-2 sm:px-3 py-1.5 sm:py-2.5 rounded-input border font-semibold transition-all duration-fast active:scale-[0.98] no-underline"
                     style={{ background: t.bg2, borderColor: t.blueprintBorder, color: t.textPrimary }}
                     onMouseEnter={(e) => { e.currentTarget.style.borderColor = accent }}
                     onMouseLeave={(e) => { e.currentTarget.style.borderColor = t.blueprintBorder }}>
-                    <span className="text-[11px] sm:text-sm truncate">{link.label}</span>
-                    <ExternalLink size={12} style={{ color: accent, flexShrink: 0 }} />
+                    <span className="text-[10px] sm:text-sm truncate">{link.label}</span>
+                    <ExternalLink size={11} style={{ color: accent, flexShrink: 0 }} />
                   </a>
                 ))}
               </div>

@@ -260,6 +260,8 @@ export default function LinkPageEditor() {
     updatedAt: new Date(),
     links: page?.links ?? [],
     ...watchedValues,
+    // avatarUrl vem do perfil das Configurações, não do form
+    avatarUrl: page?.avatarUrl,
   }
 
   return (
