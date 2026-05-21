@@ -11,11 +11,17 @@ export function useLinkPage() {
   })
 }
 
+/** Invalida tanto o cache do editor quanto o cache público (qualquer username). */
+function invalidateAll(qc: ReturnType<typeof useQueryClient>) {
+  qc.invalidateQueries({ queryKey: KEY })
+  qc.invalidateQueries({ queryKey: ['link-page-public'] })
+}
+
 export function useUpsertLinkPage() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: Partial<LinkPageFormValues>) => linkPageService.upsert(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+    onSuccess: () => invalidateAll(qc),
   })
 }
 
@@ -23,7 +29,7 @@ export function useAddLink() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ label, url }: LinkFormValues) => linkPageService.addLink(label, url),
-    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+    onSuccess: () => invalidateAll(qc),
   })
 }
 
@@ -32,7 +38,7 @@ export function useUpdateLink() {
   return useMutation({
     mutationFn: ({ id, ...data }: { id: string } & Partial<LinkFormValues>) =>
       linkPageService.updateLink(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+    onSuccess: () => invalidateAll(qc),
   })
 }
 
@@ -40,7 +46,7 @@ export function useDeleteLink() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (linkId: string) => linkPageService.deleteLink(linkId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+    onSuccess: () => invalidateAll(qc),
   })
 }
 
@@ -48,6 +54,6 @@ export function useReorderLinks() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: linkPageService.reorderLinks,
-    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+    onSuccess: () => invalidateAll(qc),
   })
 }

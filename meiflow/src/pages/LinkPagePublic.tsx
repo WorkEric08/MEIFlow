@@ -64,6 +64,8 @@ export default function LinkPagePublic() {
     queryKey: ['link-page-public', username],
     queryFn: () => linkPageService.get(),
     enabled: !!username,
+    staleTime: 0,
+    refetchOnMount: 'always',
   })
 
   // Erro / loading inicial — splash em cima
