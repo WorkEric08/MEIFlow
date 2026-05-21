@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   Link2, User, Palette, Eye, EyeOff, Sun, Moon, LayoutList, Columns2,
@@ -15,25 +15,13 @@ import AddLinkForm from '@/features/link-page/components/AddLinkForm'
 import AccentColorPicker from '@/features/link-page/components/AccentColorPicker'
 import LinkPagePreview from '@/features/link-page/components/LinkPagePreview'
 import { Modal } from '@/components/shared'
+import PhoneInput from '@/components/PhoneInput'
 import { useProfileStore } from '@/store/profile'
 import type { LinkPageFormValues } from '@/features/link-page/types'
 
 const AUTOSAVE_DEBOUNCE_MS = 800
 
 // ─── Helpers ────────────────────────────────────────────────────
-function formatPhone(value: string): string {
-  const digits = value.replace(/\D/g, '').slice(0, 11)
-  if (!digits) return ''
-  let d = digits
-  if (d.length > 2 && d[2] !== '9') d = (d.slice(0, 2) + '9' + d.slice(2)).slice(0, 11)
-  const ddd = d.slice(0, 2)
-  const nine = d.slice(2, 3)
-  const rest = d.slice(3)
-  if (d.length <= 2) return `(${ddd}`
-  if (d.length === 3) return `(${ddd}) ${nine}`
-  return `(${ddd}) ${nine} ${rest}`
-}
-
 const INPUT_CLS = 'w-full px-3 py-2.5 rounded-input text-sm border outline-none transition-all duration-fast'
 const inputStyle = (err?: unknown): React.CSSProperties => ({
   background: 'var(--bg-2)',
@@ -150,7 +138,7 @@ export default function LinkPageEditor() {
     if (incoming !== current) linkPageService.upsert({ avatarUrl: incoming || undefined })
   }, [profile.photo, page?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const { register, watch, setValue, reset, formState: { errors } } = useForm<LinkPageFormValues>({
+  const { register, watch, setValue, reset, control, formState: { errors } } = useForm<LinkPageFormValues>({
     resolver: zodResolver(linkPageSchema),
     mode: 'onChange',
     defaultValues: {
@@ -357,10 +345,15 @@ export default function LinkPageEditor() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Telefone" error={errors.phone?.message}>
-                  <input {...register('phone')}
-                    onChange={(e) => setValue('phone', formatPhone(e.target.value), { shouldDirty: true, shouldValidate: false })}
-                    placeholder="(00) 0 0000-0000" inputMode="tel"
-                    className={INPUT_CLS} style={inputStyle(errors.phone)} />
+                  <Controller name="phone" control={control} render={({ field }) => (
+                    <PhoneInput
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      className={INPUT_CLS}
+                      style={inputStyle(errors.phone)}
+                    />
+                  )} />
                 </Field>
                 <Field label="E-mail" error={errors.email?.message}>
                   <input {...register('email')} placeholder="contato@exemplo.com" type="email" inputMode="email"

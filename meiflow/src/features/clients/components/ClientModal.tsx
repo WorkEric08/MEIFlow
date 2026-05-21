@@ -1,8 +1,9 @@
 import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Modal, Field, inputCls, inputStyle } from '@/components/shared'
 import { useUnsavedConfirm } from '@/hooks/useUnsavedConfirm'
+import PhoneInput from '@/components/PhoneInput'
 import { clientSchema, type ClientFormValues } from '../schemas'
 import { useCreateClient, useUpdateClient } from '../hooks'
 import type { Client } from '@/services/db'
@@ -17,7 +18,7 @@ export default function ClientModal({ open, onClose, editing }: Props) {
   const create = useCreateClient()
   const update = useUpdateClient()
 
-  const { register, handleSubmit, reset, formState: { errors, isDirty } } = useForm<ClientFormValues>({
+  const { register, handleSubmit, reset, control, formState: { errors, isDirty } } = useForm<ClientFormValues>({
     resolver: zodResolver(clientSchema),
     defaultValues: { name: '', email: '', phone: '', company: '', notes: '' },
   })
@@ -56,7 +57,15 @@ export default function ClientModal({ open, onClose, editing }: Props) {
           <input {...register('email')} type="email" placeholder="email@exemplo.com" className={inputCls(!!errors.email)} style={inputStyle(!!errors.email)} />
         </Field>
         <Field label="Telefone" error={errors.phone?.message}>
-          <input {...register('phone')} placeholder="(00) 0 00000000" inputMode="tel" className={inputCls()} style={inputStyle()} />
+          <Controller name="phone" control={control} render={({ field }) => (
+            <PhoneInput
+              value={field.value ?? ''}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              className={inputCls()}
+              style={inputStyle()}
+            />
+          )} />
         </Field>
         <Field label="Observações" error={errors.notes?.message}>
           <textarea {...register('notes')} placeholder="Anotações sobre o cliente…" rows={1}
