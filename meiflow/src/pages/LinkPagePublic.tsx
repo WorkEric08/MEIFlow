@@ -177,29 +177,29 @@ export default function LinkPagePublic() {
         ID · {page.username}
       </div>
 
-      {/* Corpo scrollável — flex-row para separar colunas */}
+      {/* Corpo scrollável — sempre flex-row, mesmo em telas estreitas (PWA mobile) */}
       <div
-        className="relative flex-1 min-h-0 flex flex-col sm:flex-row"
+        className="relative flex-1 min-h-0 flex flex-row"
         style={{ overflowY: 'auto', scrollbarWidth: 'none' }}
       >
         {/* Coluna esquerda: identidade + bio + contatos */}
-        <div className={`flex flex-col p-5 sm:p-7 pt-8 ${hasLinks ? 'flex-1 min-w-0' : 'w-full'}`}>
+        <div className={`flex flex-col p-3.5 sm:p-7 pt-7 sm:pt-8 ${hasLinks ? 'flex-1 min-w-0' : 'w-full'}`}>
           {AvatarIdentity}
           {Bio}
           {contacts.length > 0 && (
             <>
               <Separator color={t.blueprintBorder} label="CONTATO" labelColor={t.textTertiary} bg={t.bg1} />
-              {/* 2 colunas quando não há links, para aproveitar o espaço horizontal */}
-              <ul className={`grid gap-2 sm:gap-2.5 ${!hasLinks ? 'sm:grid-cols-2' : 'grid-cols-1'}`}>
+              {/* Em telas mais largas, contatos em 2 colunas quando não há links */}
+              <ul className={`grid gap-1.5 sm:gap-2.5 ${!hasLinks ? 'sm:grid-cols-2' : 'grid-cols-1'}`}>
                 {contacts.map(({ key, label, href }) => {
                   const Icon = CONTACT_ICONS[key]
                   const content = (
-                    <span className="flex items-center gap-2.5">
-                      <span className="w-7 h-7 rounded-input flex items-center justify-center shrink-0 border"
+                    <span className="flex items-center gap-2 sm:gap-2.5">
+                      <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-input flex items-center justify-center shrink-0 border"
                         style={{ background: t.bg2, borderColor: t.blueprintBorder, color: accent }}>
-                        <Icon size={13} strokeWidth={2.2} />
+                        <Icon size={12} strokeWidth={2.2} />
                       </span>
-                      <span className="text-sm font-medium truncate min-w-0 flex-1" style={{ color: t.textPrimary }}>{label}</span>
+                      <span className="text-[12px] sm:text-sm font-medium truncate min-w-0 flex-1" style={{ color: t.textPrimary }}>{label}</span>
                     </span>
                   )
                   return (
@@ -219,19 +219,18 @@ export default function LinkPagePublic() {
           )}
         </div>
 
-        {/* Separador vertical — só desktop e só quando há links */}
+        {/* Separador vertical — sempre visível quando há links */}
         {hasLinks && (
-          <div className="hidden sm:block w-px shrink-0 self-stretch" style={{ background: t.blueprintBorder }} />
+          <div className="w-px shrink-0 self-stretch" style={{ background: t.blueprintBorder }} />
         )}
 
-        {/* Coluna direita: links */}
+        {/* Coluna direita: links — largura adaptada para mobile */}
         {hasLinks && (
           <div
-            className="flex flex-col p-5 sm:p-7 pt-4 sm:pt-8 sm:w-[210px] shrink-0 border-t sm:border-t-0"
-            style={{ borderColor: t.blueprintBorder }}
+            className="flex flex-col p-3 sm:p-7 pt-7 sm:pt-8 w-[140px] sm:w-[210px] shrink-0"
           >
             <Separator color={t.blueprintBorder} label="LINKS" labelColor={t.textTertiary} bg={t.bg1} />
-            <div className="flex flex-col gap-2 sm:gap-2.5">
+            <div className="flex flex-col gap-1.5 sm:gap-2.5">
               {page.links.map((link) => (
                 <a
                   key={link.id}
@@ -239,13 +238,13 @@ export default function LinkPagePublic() {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => handleLinkClick(link.id)}
-                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-input border font-semibold transition-all duration-fast active:scale-[0.98] no-underline"
+                  className="w-full flex items-center justify-between px-2 sm:px-3 py-2 sm:py-2.5 rounded-input border font-semibold transition-all duration-fast active:scale-[0.98] no-underline"
                   style={{ background: t.bg2, borderColor: t.blueprintBorder, color: t.textPrimary }}
                   onMouseEnter={(e) => { e.currentTarget.style.borderColor = accent }}
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = t.blueprintBorder }}
                 >
-                  <span className="text-sm truncate">{link.label}</span>
-                  <ExternalLink size={14} style={{ color: accent, flexShrink: 0 }} />
+                  <span className="text-[11px] sm:text-sm truncate">{link.label}</span>
+                  <ExternalLink size={12} style={{ color: accent, flexShrink: 0 }} />
                 </a>
               ))}
             </div>
