@@ -162,14 +162,12 @@ export default function LinkPagePublic() {
   const hasLinks = showLinks && page.links.length > 0
 
   // ── Layout horizontal ────────────────────────────────────────────
+  // Estrutura idêntica ao preview — tamanho natural, sem forçar altura
   const HorizontalCard = (
     <article
       id="card-print-area"
-      className="relative w-full rounded-modal border flex flex-col"
-      style={{
-        flex: 1, minHeight: 0, overflow: 'hidden',
-        background: t.bg1, borderColor: t.blueprintBorder, boxShadow: t.cardShadow,
-      }}
+      className="relative w-full rounded-modal border overflow-hidden"
+      style={{ background: t.bg1, borderColor: t.blueprintBorder, boxShadow: t.cardShadow }}
     >
       <div className="blueprint-grid absolute inset-0 pointer-events-none" />
       <div className="absolute top-3 right-4 font-mono text-[10px] tracking-widest uppercase pointer-events-none"
@@ -177,83 +175,46 @@ export default function LinkPagePublic() {
         ID · {page.username}
       </div>
 
-      {/* Corpo scrollável — sempre flex-row, mesmo em telas estreitas (PWA mobile) */}
-      <div
-        className="relative flex-1 min-h-0 flex flex-row"
-        style={{ overflowY: 'auto', scrollbarWidth: 'none' }}
-      >
+      {/* Duas colunas — sempre flex-row, como no preview */}
+      <div className="relative flex">
         {/* Coluna esquerda: identidade + bio + contatos */}
-        <div className={`flex flex-col p-3.5 sm:p-7 pt-7 sm:pt-8 ${hasLinks ? 'flex-1 min-w-0' : 'w-full'}`}>
+        <div className={`p-4 sm:p-6 pt-7 sm:pt-8 ${hasLinks ? 'flex-1 min-w-0' : 'w-full'}`}>
           {AvatarIdentity}
           {Bio}
-          {contacts.length > 0 && (
-            <>
-              <Separator color={t.blueprintBorder} label="CONTATO" labelColor={t.textTertiary} bg={t.bg1} />
-              {/* Em telas mais largas, contatos em 2 colunas quando não há links */}
-              <ul className={`grid gap-1.5 sm:gap-2.5 ${!hasLinks ? 'sm:grid-cols-2' : 'grid-cols-1'}`}>
-                {contacts.map(({ key, label, href }) => {
-                  const Icon = CONTACT_ICONS[key]
-                  const content = (
-                    <span className="flex items-center gap-2 sm:gap-2.5">
-                      <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-input flex items-center justify-center shrink-0 border"
-                        style={{ background: t.bg2, borderColor: t.blueprintBorder, color: accent }}>
-                        <Icon size={12} strokeWidth={2.2} />
-                      </span>
-                      <span className="text-[12px] sm:text-sm font-medium truncate min-w-0 flex-1" style={{ color: t.textPrimary }}>{label}</span>
-                    </span>
-                  )
-                  return (
-                    <li key={key}>
-                      {href ? (
-                        <a href={href} target={key === 'website' ? '_blank' : undefined}
-                          rel={key === 'website' ? 'noopener noreferrer' : undefined}
-                          className="block transition-all duration-fast hover:opacity-80 active:scale-[0.99]">
-                          {content}
-                        </a>
-                      ) : content}
-                    </li>
-                  )
-                })}
-              </ul>
-            </>
-          )}
+          {Contacts}
         </div>
 
-        {/* Separador vertical — sempre visível quando há links */}
+        {/* Separador vertical + coluna direita: links */}
         {hasLinks && (
-          <div className="w-px shrink-0 self-stretch" style={{ background: t.blueprintBorder }} />
-        )}
-
-        {/* Coluna direita: links — largura adaptada para mobile */}
-        {hasLinks && (
-          <div
-            className="flex flex-col p-3 sm:p-7 pt-7 sm:pt-8 w-[140px] sm:w-[210px] shrink-0"
-          >
-            <Separator color={t.blueprintBorder} label="LINKS" labelColor={t.textTertiary} bg={t.bg1} />
-            <div className="flex flex-col gap-1.5 sm:gap-2.5">
-              {page.links.map((link) => (
-                <a
-                  key={link.id}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => handleLinkClick(link.id)}
-                  className="w-full flex items-center justify-between px-2 sm:px-3 py-2 sm:py-2.5 rounded-input border font-semibold transition-all duration-fast active:scale-[0.98] no-underline"
-                  style={{ background: t.bg2, borderColor: t.blueprintBorder, color: t.textPrimary }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = accent }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = t.blueprintBorder }}
-                >
-                  <span className="text-[11px] sm:text-sm truncate">{link.label}</span>
-                  <ExternalLink size={12} style={{ color: accent, flexShrink: 0 }} />
-                </a>
-              ))}
+          <>
+            <div className="w-px shrink-0 self-stretch" style={{ background: t.blueprintBorder }} />
+            <div className="w-[150px] sm:w-[200px] shrink-0 p-4 sm:p-6 pt-7 sm:pt-8">
+              <Separator color={t.blueprintBorder} label="LINKS" labelColor={t.textTertiary} bg={t.bg1} />
+              <div className="flex flex-col gap-1.5 sm:gap-2.5">
+                {page.links.map((link) => (
+                  <a
+                    key={link.id}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => handleLinkClick(link.id)}
+                    className="w-full flex items-center justify-between px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-input border font-semibold transition-all duration-fast active:scale-[0.98] no-underline"
+                    style={{ background: t.bg2, borderColor: t.blueprintBorder, color: t.textPrimary }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = accent }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = t.blueprintBorder }}
+                  >
+                    <span className="text-[11px] sm:text-sm truncate">{link.label}</span>
+                    <ExternalLink size={12} style={{ color: accent, flexShrink: 0 }} />
+                  </a>
+                ))}
+              </div>
             </div>
-          </div>
+          </>
         )}
       </div>
 
-      {/* Footer pinado no fundo */}
-      <div className="relative flex-none px-5 sm:px-7 pt-2.5 pb-3 sm:pb-4 border-t flex items-center"
+      {/* Footer full-width — como no preview */}
+      <div className="relative px-4 sm:px-6 pt-3 pb-4 sm:pb-5 border-t flex items-center"
         style={{ borderColor: t.blueprintBorder }}>
         <span className="font-mono text-[11px] tracking-wide truncate" style={{ color: accent, opacity: 0.7 }}>
           meiflow.com/{page.username}
@@ -266,11 +227,8 @@ export default function LinkPagePublic() {
   const VerticalCard = (
     <article
       id="card-print-area"
-      className="relative w-full rounded-modal border flex flex-col"
-      style={{
-        flex: 1, minHeight: 0, overflow: 'hidden',
-        background: t.bg1, borderColor: t.blueprintBorder, boxShadow: t.cardShadow,
-      }}
+      className="relative w-full rounded-modal border overflow-hidden"
+      style={{ background: t.bg1, borderColor: t.blueprintBorder, boxShadow: t.cardShadow }}
     >
       <div className="blueprint-grid absolute inset-0 pointer-events-none" />
       <div className="absolute top-3 right-4 font-mono text-[10px] tracking-widest uppercase pointer-events-none"
@@ -278,8 +236,7 @@ export default function LinkPagePublic() {
         ID · {page.username}
       </div>
 
-      <div className="relative flex-1 min-h-0 p-4 sm:p-6 pt-8"
-        style={{ overflowY: 'auto', scrollbarWidth: 'none' }}>
+      <div className="relative p-4 sm:p-6 pt-8">
         {AvatarIdentity}
         {Bio}
         {Contacts}
@@ -290,13 +247,13 @@ export default function LinkPagePublic() {
             {LinksList}
           </>
         )}
-      </div>
 
-      <div className="relative flex-none px-4 sm:px-6 pt-2.5 pb-3 sm:pb-4 border-t flex items-center"
-        style={{ borderColor: t.blueprintBorder }}>
-        <span className="font-mono text-[11px] tracking-wide truncate" style={{ color: accent, opacity: 0.7 }}>
-          meiflow.com/{page.username}
-        </span>
+        <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t flex items-center"
+          style={{ borderColor: t.blueprintBorder }}>
+          <span className="font-mono text-[11px] tracking-wide truncate" style={{ color: accent, opacity: 0.7 }}>
+            meiflow.com/{page.username}
+          </span>
+        </div>
       </div>
     </article>
   )
@@ -305,7 +262,7 @@ export default function LinkPagePublic() {
 
   return (
     <div
-      className="h-dvh flex flex-col items-center justify-center px-3 py-3 sm:px-5 sm:py-5 relative overflow-hidden"
+      className="min-h-dvh flex items-center justify-center px-4 py-6 sm:px-6 sm:py-10 relative"
       id="link-page-root"
       style={{
         background: t.bg0,
@@ -322,8 +279,8 @@ export default function LinkPagePublic() {
         }}
       />
 
-      {/* Cartão ocupa todo o espaço disponível */}
-      <div className={`relative w-full ${containerMaxW} h-full flex flex-col min-h-0`}>
+      {/* Cartão em tamanho natural — centralizado, como no preview */}
+      <div className={`relative w-full ${containerMaxW}`}>
         {isHorizontal ? HorizontalCard : VerticalCard}
       </div>
     </div>
