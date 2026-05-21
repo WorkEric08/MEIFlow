@@ -1,7 +1,9 @@
-import { useRef } from 'react'
-import { Printer, Send, User, FolderOpen, Calendar, CheckCircle2, Clock } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { FileDown, Send, User, FolderOpen, Calendar, CheckCircle2, Clock } from 'lucide-react'
 import { renderMarkdown } from '../markdown'
 import { Modal, StatusBadge } from '@/components/shared'
+import PdfPreviewModal from '@/components/PdfPreviewModal'
+import { CONTRACT_PDF_STYLES } from '../printStyles'
 import { useSendContract } from '../index'
 import { useClients } from '@/features/clients/hooks'
 import { useProjects } from '@/features/projects/hooks'
@@ -64,11 +66,12 @@ export default function ContractViewer({ contract, onClose }: Props) {
   const sendContract = useSendContract()
   const toast = useToast()
   const styleRef = useRef<HTMLStyleElement | null>(null)
+  const [pdfOpen, setPdfOpen] = useState(false)
 
   const client = clients.find((c) => c.id === contract.clientId)
   const project = projects.find((p) => p.id === contract.projectId)
 
-  function handlePrint() {
+  function handleNativePrint() {
     if (!styleRef.current) {
       const style = document.createElement('style')
       document.head.appendChild(style)
@@ -96,11 +99,11 @@ export default function ContractViewer({ contract, onClose }: Props) {
         <StatusBadge status={contract.status} />
         <div className="flex-1" />
         <button
-          onClick={handlePrint}
+          onClick={() => setPdfOpen(true)}
           className="flex items-center gap-1.5 px-3 py-2 rounded-input border text-xs font-medium transition-all hover:opacity-80"
           style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
         >
-          <Printer size={13} /> Exportar PDF
+          <FileDown size={13} /> Exportar PDF
         </button>
         {contract.status !== 'accepted' && (
           <button
@@ -147,6 +150,14 @@ export default function ContractViewer({ contract, onClose }: Props) {
         </div>
       </div>
 
+      <PdfPreviewModal
+        open={pdfOpen}
+        onClose={() => setPdfOpen(false)}
+        title={contract.title}
+        contentHtml={html}
+        documentStyles={CONTRACT_PDF_STYLES}
+        onNativePrint={handleNativePrint}
+      />
     </Modal>
   )
 }

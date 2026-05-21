@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Check, Loader2, Printer, FileText } from 'lucide-react'
+import { ArrowLeft, Check, Loader2, FileDown, FileText } from 'lucide-react'
 import RichTextEditor, { type VariableOption } from '@/components/RichTextEditor'
 import CustomSelect from '@/components/CustomSelect'
+import PdfPreviewModal from '@/components/PdfPreviewModal'
+import { CONTRACT_PDF_STYLES } from '@/features/contracts/printStyles'
 import { Field, inputCls, inputStyle } from '@/components/shared'
 import { useClients } from '@/features/clients/hooks'
 import { useProjects } from '@/features/projects/hooks'
@@ -165,7 +167,8 @@ export default function ContractEditor() {
     navigate('/contracts')
   }
 
-  function handlePrint() {
+  const [pdfOpen, setPdfOpen] = useState(false)
+  function handleNativePrint() {
     window.print()
   }
 
@@ -208,12 +211,13 @@ export default function ContractEditor() {
           <SaveStatus saving={isSaving} savedAt={savedAt} dirty={initializedRef.current && !savedAt && !!canSave} />
 
           <button
-            onClick={handlePrint}
-            aria-label="Imprimir / PDF"
-            className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-input border text-sm font-medium transition-all hover:opacity-80"
+            onClick={() => setPdfOpen(true)}
+            disabled={!canSave}
+            aria-label="Exportar PDF"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-input border text-sm font-medium transition-all hover:opacity-80 disabled:opacity-50"
             style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
           >
-            <Printer size={14} /> PDF
+            <FileDown size={14} /> PDF
           </button>
 
           <button
@@ -269,6 +273,15 @@ export default function ContractEditor() {
           placeholder="Escreva ou edite o conteúdo do contrato aqui…"
         />
       </div>
+
+      <PdfPreviewModal
+        open={pdfOpen}
+        onClose={() => setPdfOpen(false)}
+        title={title || 'Contrato'}
+        contentHtml={content}
+        documentStyles={CONTRACT_PDF_STYLES}
+        onNativePrint={handleNativePrint}
+      />
     </div>
   )
 }
