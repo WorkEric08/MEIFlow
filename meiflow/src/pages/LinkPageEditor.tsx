@@ -253,7 +253,7 @@ export default function LinkPageEditor() {
   }
 
   return (
-    <div className="-m-4 md:-m-5 lg:-m-6 min-h-[calc(100dvh-56px)] animate-fade-in"
+    <div className="-m-4 md:-m-5 lg:-m-6 min-h-[calc(100dvh-56px)]"
       style={{ background: 'var(--bg-0)' }}>
 
       {/* ── Header sticky com título + status + Ver página + abas ── */}
