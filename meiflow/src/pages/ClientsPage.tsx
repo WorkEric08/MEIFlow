@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Users, Plus, Pencil, Archive, ArchiveRestore, Search, ChevronRight, X } from 'lucide-react'
+import { Users, Plus, Pencil, Archive, ArchiveRestore, Search, X } from 'lucide-react'
 import {
   useClients, useArchivedClients, useArchiveClient, useUnarchiveClient,
 } from '@/features/clients/hooks'
@@ -51,7 +51,6 @@ export default function ClientsPage() {
     })
   }
 
-
   const loading = showArchived ? loadingArchived : isLoading
 
   return (
@@ -78,7 +77,7 @@ export default function ClientsPage() {
             style={{
               borderColor: showArchived ? 'var(--primary)' : 'var(--border)',
               color: showArchived ? 'var(--primary)' : 'var(--text-secondary)',
-              background: showArchived ? 'var(--primary-subtle)' : 'var(--bg-1)',
+              background: showArchived ? 'var(--primary-subtle)' : 'transparent',
             }}
           >
             <Archive size={15} />
@@ -97,7 +96,7 @@ export default function ClientsPage() {
         <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-tertiary)' }} />
         <input value={search} onChange={(e) => setSearch(e.target.value)}
           placeholder={showArchived ? 'Buscar arquivados…' : 'Buscar nome, e-mail ou empresa…'}
-          className="w-full pl-10 pr-10 py-3 rounded-input text-sm border outline-none transition-all"
+          className="w-full pl-10 pr-10 py-2.5 rounded-input text-sm border outline-none transition-all"
           style={{ background: 'var(--bg-1)', color: 'var(--text-primary)', borderColor: 'var(--border)' }} />
         {search && (
           <button onClick={() => setSearch('')} aria-label="Limpar busca"
@@ -132,49 +131,60 @@ export default function ClientsPage() {
           ) : undefined}
         />
       ) : (
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-2">
           {filtered.map((c) => (
-            <div key={c.id} className="group rounded-card border overflow-hidden transition-all"
+            <article key={c.id}
+              className="rounded-card border overflow-hidden transition-colors"
               style={{ background: 'var(--bg-1)', borderColor: 'var(--border)' }}>
+
+              {/* Linha principal — clicável (abre detalhe) */}
               <button onClick={() => !showArchived && setDetail(c)} data-pwa-tap
-                className="w-full flex items-center gap-3 px-4 py-3.5 text-left">
-                <div className="w-11 h-11 rounded-full flex items-center justify-center font-bold text-base shrink-0"
+                disabled={showArchived}
+                className="w-full px-4 py-3 flex items-center gap-3 text-left disabled:cursor-default">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0"
                   style={{ background: 'var(--primary-subtle)', color: 'var(--primary)' }}>
                   {c.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{c.name}</p>
-                  <p className="text-xs truncate mt-0.5" style={{ color: 'var(--text-tertiary)' }}>{c.email}</p>
-                  {c.company && (
-                    <p className="text-xs truncate mt-0.5 font-medium" style={{ color: 'var(--text-secondary)' }}>{c.company}</p>
-                  )}
+                  <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+                    {c.name}
+                  </p>
+                  <p className="text-xs truncate mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
+                    {c.email}
+                    {c.company && ` · ${c.company}`}
+                  </p>
                 </div>
-                <ChevronRight size={18} className="shrink-0" style={{ color: 'var(--text-tertiary)' }} />
               </button>
+
+              {/* Ações — compactas */}
               <div className="flex items-stretch border-t" style={{ borderColor: 'var(--border)' }}>
                 {showArchived ? (
                   <button onClick={() => handleUnarchive(c)} data-pwa-tap
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all hover:opacity-70"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold transition-all hover:opacity-70"
                     style={{ color: 'var(--primary)' }}>
                     <ArchiveRestore size={13} /> Restaurar
                   </button>
                 ) : (
                   <>
+                    <div className="flex-1" />
                     <button onClick={() => handleEdit(c)} data-pwa-tap
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all hover:opacity-70"
-                      style={{ color: 'var(--text-secondary)' }}>
-                      <Pencil size={13} /> Editar
+                      aria-label="Editar"
+                      title="Editar"
+                      className="px-4 flex items-center justify-center transition-all hover:opacity-70 border-l"
+                      style={{ color: 'var(--text-secondary)', borderColor: 'var(--border)' }}>
+                      <Pencil size={13} />
                     </button>
-                    <div className="w-px" style={{ background: 'var(--border)' }} />
                     <button onClick={() => handleArchive(c)} data-pwa-tap
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all hover:opacity-70"
-                      style={{ color: 'var(--text-secondary)' }}>
-                      <Archive size={13} /> Arquivar
+                      aria-label="Arquivar"
+                      title="Arquivar"
+                      className="px-4 flex items-center justify-center transition-all hover:opacity-70 border-l"
+                      style={{ color: 'var(--text-secondary)', borderColor: 'var(--border)' }}>
+                      <Archive size={13} />
                     </button>
                   </>
                 )}
               </div>
-            </div>
+            </article>
           ))}
         </div>
       )}

@@ -7,11 +7,10 @@ import { useToast } from '@/store/toast'
 import ContractModal from '@/features/contracts/components/ContractModal'
 import ContractViewer from '@/features/contracts/components/ContractViewer'
 import { ConfirmModal } from '@/components/ConfirmModal'
-import { EmptyState, StatusBadge } from '@/components/shared'
+import { EmptyState } from '@/components/shared'
 import { SkeletonList } from '@/components/Skeleton'
 import { formatDate } from '@/lib/utils'
 import type { Contract, ContractStatus } from '@/services/db'
-import { cn } from '@/lib/utils'
 
 type Filter = 'all' | ContractStatus
 
@@ -22,11 +21,25 @@ const FILTERS: { value: Filter; label: string }[] = [
   { value: 'accepted', label: 'Aceitos' },
 ]
 
-const STATUS_ACCENT: Record<ContractStatus, { border: string; iconBg: string; iconColor: string }> = {
-  draft:    { border: 'var(--border)',          iconBg: 'var(--bg-2)',              iconColor: 'var(--text-tertiary)' },
-  sent:     { border: 'var(--status-active)',   iconBg: 'var(--status-active-bg)',  iconColor: 'var(--status-active)' },
-  accepted: { border: 'var(--status-paid)',     iconBg: 'var(--status-paid-bg)',    iconColor: 'var(--status-paid)' },
-  rejected: { border: 'var(--status-overdue)',  iconBg: 'var(--status-overdue-bg)', iconColor: 'var(--status-overdue)' },
+const STATUS_LABEL: Record<ContractStatus, string> = {
+  draft:    'Rascunho',
+  sent:     'Enviado',
+  accepted: 'Aceito',
+  rejected: 'Rejeitado',
+}
+
+function statusColor(status: ContractStatus): string {
+  if (status === 'accepted') return 'var(--status-paid)'
+  if (status === 'sent')     return 'var(--status-active)'
+  if (status === 'rejected') return 'var(--status-overdue)'
+  return 'var(--text-tertiary)'
+}
+
+/** Data e prefixo do "evento mais recente" relevante de cada contrato. */
+function lastEventLine(c: Contract): string {
+  if (c.acceptedAt) return `Aceito ${formatDate(new Date(c.acceptedAt))}`
+  if (c.sentAt)     return `Enviado ${formatDate(new Date(c.sentAt))}`
+  return `Criado ${formatDate(c.createdAt)}`
 }
 
 export default function ContractsPage() {
@@ -108,15 +121,15 @@ export default function ContractsPage() {
 
       {/* ── Busca + Filtros ── */}
       {contracts.length > 0 && (
-        <div className="flex flex-col sm:flex-row gap-2.5 mb-4">
-          <div className="relative flex-1">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+        <>
+          <div className="relative mb-3">
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
               style={{ color: 'var(--text-tertiary)' }} />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar por título ou cliente"
-              className="w-full pl-9 pr-9 py-2.5 rounded-input text-sm border outline-none transition-all focus:ring-1"
+              className="w-full pl-10 pr-10 py-2.5 rounded-input text-sm border outline-none transition-all"
               style={{
                 background: 'var(--bg-1)',
                 color: 'var(--text-primary)',
@@ -125,35 +138,35 @@ export default function ContractsPage() {
             />
             {query && (
               <button onClick={() => setQuery('')} aria-label="Limpar busca"
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded transition-all hover:opacity-70"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded transition-all hover:opacity-70"
                 style={{ color: 'var(--text-tertiary)' }}>
                 <X size={14} />
               </button>
             )}
           </div>
 
-          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide -mx-1 px-1">
-            {FILTERS.map((f) => (
-              <button
-                key={f.value}
-                onClick={() => setFilter(f.value)}
-                className={cn(
-                  'px-3 py-2 rounded-input text-xs font-semibold whitespace-nowrap transition-all',
-                  filter === f.value ? '' : 'hover:opacity-80',
-                )}
-                style={{
-                  background: filter === f.value ? 'var(--primary)' : 'var(--bg-1)',
-                  color: filter === f.value ? '#fff' : 'var(--text-secondary)',
-                  borderColor: 'var(--border)',
-                }}
-              >
-                {f.label}
-              </button>
-            ))}
+          <div className="mb-4 -mx-4 sm:mx-0 overflow-x-auto scrollbar-hide">
+            <div className="flex gap-1.5 px-4 sm:px-0 pb-1">
+              {FILTERS.map((f) => {
+                const active = filter === f.value
+                return (
+                  <button key={f.value} onClick={() => setFilter(f.value)} data-pwa-tap
+                    className="shrink-0 px-3 py-1.5 rounded-badge text-xs font-semibold whitespace-nowrap transition-all"
+                    style={{
+                      background: active ? 'var(--primary)' : 'transparent',
+                      color: active ? '#fff' : 'var(--text-secondary)',
+                      border: `1px solid ${active ? 'var(--primary)' : 'var(--border)'}`,
+                    }}>
+                    {f.label}
+                  </button>
+                )
+              })}
+            </div>
           </div>
-        </div>
+        </>
       )}
 
+      {/* ── Lista ── */}
       {isLoading ? (
         <SkeletonList variant="generic" count={3} />
       ) : contracts.length === 0 ? (
@@ -181,118 +194,95 @@ export default function ContractsPage() {
           }
         />
       ) : (
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-2">
           {filtered.map((c) => {
             const client = clients.find((cl) => cl.id === c.clientId)
-            const accent = STATUS_ACCENT[c.status]
+            const color = statusColor(c.status)
+            const isAccepted = c.status === 'accepted'
             return (
-              <div
-                key={c.id}
-                className="rounded-card border overflow-hidden transition-all"
-                style={{
-                  background: 'var(--bg-1)',
-                  borderColor: 'var(--border)',
-                  borderLeft: `3px solid ${accent.border}`,
-                }}
-              >
-                {/* ── Área clicável principal ── */}
+              <article key={c.id}
+                className="rounded-card border overflow-hidden transition-colors"
+                style={{ background: 'var(--bg-1)', borderColor: 'var(--border)' }}>
+
+                {/* Linha principal — clicável (abre o viewer) */}
                 <button
                   onClick={() => setViewing(c)}
                   data-pwa-tap
-                  className="w-full flex items-start gap-3 px-4 pt-4 pb-3.5 text-left hover:opacity-90 transition-opacity"
+                  className="w-full px-4 py-3 flex items-start gap-3 text-left"
                 >
-                  <div
-                    className="w-9 h-9 rounded-input flex items-center justify-center shrink-0 mt-0.5"
-                    style={{ background: accent.iconBg, color: accent.iconColor }}
-                  >
-                    <FileText size={15} />
-                  </div>
+                  {/* Ponto de status */}
+                  <span aria-hidden
+                    className="w-2 h-2 rounded-full shrink-0 mt-1.5"
+                    style={{ background: color }} />
 
-                  <div className="min-w-0 flex-1">
-                    {/* Título + badge */}
-                    <div className="flex items-start justify-between gap-2 mb-1.5">
-                      <p className="text-sm font-semibold leading-snug" style={{ color: 'var(--text-primary)' }}>
-                        {c.title}
-                      </p>
-                      <StatusBadge status={c.status} />
-                    </div>
-
-                    {/* Cliente */}
+                  {/* Título + cliente + último evento */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold leading-snug break-words"
+                      style={{ color: 'var(--text-primary)' }}>
+                      {c.title}
+                    </p>
                     {client && (
-                      <p className="text-xs font-medium mb-1.5 truncate" style={{ color: 'var(--text-secondary)' }}>
+                      <p className="text-xs mt-0.5 truncate"
+                        style={{ color: 'var(--text-tertiary)' }}>
                         {client.name}
                       </p>
                     )}
+                  </div>
 
-                    {/* Datas */}
-                    <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-                      <span className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
-                        <Calendar size={10} />
-                        Criado {formatDate(c.createdAt)}
-                      </span>
-                      {c.sentAt && (
-                        <span className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--status-active)' }}>
-                          <Send size={10} />
-                          Enviado {formatDate(new Date(c.sentAt))}
-                        </span>
-                      )}
-                      {c.acceptedAt && (
-                        <span className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--status-paid)' }}>
-                          <Eye size={10} />
-                          Aceito {formatDate(new Date(c.acceptedAt))}
-                        </span>
-                      )}
-                    </div>
+                  {/* Status + data do último evento */}
+                  <div className="text-right shrink-0">
+                    <p className="text-[11px] font-semibold leading-tight"
+                      style={{ color }}>
+                      {STATUS_LABEL[c.status]}
+                    </p>
+                    <p className="text-[11px] mt-0.5 inline-flex items-center gap-1"
+                      style={{ color: 'var(--text-tertiary)' }}>
+                      <Calendar size={10} aria-hidden />
+                      {lastEventLine(c)}
+                    </p>
                   </div>
                 </button>
 
-                {/* ── Barra de ações ── */}
+                {/* Ações */}
                 <div className="flex items-stretch border-t" style={{ borderColor: 'var(--border)' }}>
-                  <button
-                    onClick={() => setViewing(c)}
-                    data-pwa-tap
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all hover:opacity-70"
-                    style={{ color: 'var(--text-secondary)' }}
-                  >
-                    <Eye size={13} /> Ver
-                  </button>
-
-                  {c.status !== 'accepted' && (
-                    <>
-                      <div className="w-px" style={{ background: 'var(--border)' }} />
-                      <button
-                        onClick={() => handleEdit(c)}
-                        data-pwa-tap
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all hover:opacity-70"
-                        style={{ color: 'var(--text-secondary)' }}
-                      >
-                        <Pencil size={13} /> Editar
-                      </button>
-                      <div className="w-px" style={{ background: 'var(--border)' }} />
-                      <button
-                        onClick={() => handleCopyLink(c)}
-                        data-pwa-tap
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-all hover:opacity-70"
-                        style={{ color: 'var(--primary)' }}
-                      >
-                        <Send size={13} />
-                        {c.status === 'draft' ? 'Enviar' : 'Copiar link'}
-                      </button>
-                    </>
+                  {!isAccepted ? (
+                    <button onClick={() => handleCopyLink(c)} data-pwa-tap
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold transition-all hover:opacity-70"
+                      style={{ color: 'var(--primary)' }}>
+                      <Send size={13} />
+                      {c.status === 'draft' ? 'Enviar' : 'Copiar link'}
+                    </button>
+                  ) : (
+                    <div className="flex-1" />
                   )}
 
-                  <div className="w-px" style={{ background: 'var(--border)' }} />
-                  <button
-                    onClick={() => handleDelete(c)}
-                    data-pwa-tap
+                  <button onClick={() => setViewing(c)} data-pwa-tap
+                    aria-label="Ver"
+                    title="Ver"
+                    className="px-4 flex items-center justify-center transition-all hover:opacity-70 border-l"
+                    style={{ color: 'var(--text-secondary)', borderColor: 'var(--border)' }}>
+                    <Eye size={13} />
+                  </button>
+
+                  {!isAccepted && (
+                    <button onClick={() => handleEdit(c)} data-pwa-tap
+                      aria-label="Editar"
+                      title="Editar"
+                      className="px-4 flex items-center justify-center transition-all hover:opacity-70 border-l"
+                      style={{ color: 'var(--text-secondary)', borderColor: 'var(--border)' }}>
+                      <Pencil size={13} />
+                    </button>
+                  )}
+
+                  <button onClick={() => handleDelete(c)} data-pwa-tap
                     aria-label="Remover"
-                    className="px-4 flex items-center justify-center transition-all hover:opacity-70"
-                    style={{ color: 'var(--status-overdue)' }}
-                  >
-                    <Trash2 size={14} />
+                    title="Remover"
+                    className="px-4 flex items-center justify-center transition-all hover:opacity-70 border-l"
+                    style={{ color: 'var(--status-overdue)', borderColor: 'var(--border)' }}>
+                    <Trash2 size={13} />
                   </button>
                 </div>
-              </div>
+              </article>
             )
           })}
         </div>
