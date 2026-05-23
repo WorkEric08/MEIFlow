@@ -3,6 +3,7 @@ import { FileDown, Send, User, FolderOpen, Calendar, CheckCircle2, Clock } from 
 import { renderMarkdown } from '../markdown'
 import { Modal, StatusBadge } from '@/components/shared'
 import PdfPreviewModal from '@/components/PdfPreviewModal'
+import A4PageList from '@/components/A4PageList'
 import { CONTRACT_PDF_STYLES } from '../printStyles'
 import { useSendContract } from '../index'
 import { useClients } from '@/features/clients/hooks'
@@ -16,6 +17,11 @@ interface Props {
   onClose: () => void
 }
 
+/**
+ * Estilos aplicados ao bloco oculto #contract-print quando o usuário
+ * dispara a impressão nativa do sistema (fallback). Em `@media print`,
+ * tudo no body é hidden e só #contract-print fica visível em fullscreen.
+ */
 const BASE_PRINT_STYLES = `
   @media print {
     body * { visibility: hidden !important; }
@@ -41,23 +47,6 @@ const BASE_PRINT_STYLES = `
     #contract-print blockquote { border-left: 3px solid #999; padding-left: 12px; margin: 10px 0; font-style: italic; color: #444; }
     #contract-print a { color: #1A65C0; text-decoration: underline; }
   }
-`
-
-const DOCUMENT_STYLES = `
-  #contract-print { font-family: Georgia, 'Times New Roman', serif; }
-  #contract-print h1 { font-size: 22px; font-weight: 800; margin: 0 0 6px; color: #0D1117; line-height: 1.25; letter-spacing: -0.02em; }
-  #contract-print h2 { font-size: 16px; font-weight: 700; margin: 28px 0 8px; padding-top: 18px; border-top: 1px solid #e5e7eb; color: #0D1117; line-height: 1.35; }
-  #contract-print h3 { font-size: 14px; font-weight: 700; margin: 18px 0 6px; color: #1e293b; }
-  #contract-print p { font-size: 14px; line-height: 1.8; margin-bottom: 12px; color: #334155; }
-  #contract-print ul, #contract-print ol { padding-left: 22px; margin-bottom: 12px; }
-  #contract-print li { font-size: 14px; line-height: 1.65; color: #334155; margin-bottom: 5px; }
-  #contract-print strong { font-weight: 700; color: #0D1117; }
-  #contract-print em { font-style: italic; }
-  #contract-print u { text-decoration: underline; }
-  #contract-print blockquote { border-left: 3px solid #94A3B8; padding: 6px 0 6px 16px; margin: 14px 0; color: #475569; font-style: italic; }
-  #contract-print a { color: #1A65C0; text-decoration: underline; }
-  #contract-print code { font-family: ui-monospace, 'Courier New', monospace; font-size: 12px; background: #f8fafc; padding: 1px 5px; border-radius: 3px; border: 1px solid #e2e8f0; }
-  #contract-print hr { border: none; border-top: 1px solid #e5e7eb; margin: 24px 0; }
 `
 
 export default function ContractViewer({ contract, onClose }: Props) {
@@ -134,20 +123,29 @@ export default function ContractViewer({ contract, onClose }: Props) {
         )}
       </div>
 
-      {/* ── Documento — fundo branco, tipografia serifa ── */}
-      <div
-        id="contract-print"
-        className="rounded-card border overflow-hidden"
+      {/* ── Documento em folhas A4 (visualização principal) ── */}
+      <div className="-mx-1 sm:-mx-2 rounded-card py-4 sm:py-5"
+        style={{ background: 'var(--bg-2)' }}>
+        <A4PageList contentHtml={html} documentStyles={CONTRACT_PDF_STYLES} />
+      </div>
+
+      {/* ── Bloco oculto para o print nativo (fallback) ──
+          fica fora da tela; só aparece quando @media print kicks in
+          (BASE_PRINT_STYLES força-o a fullscreen e esconde o resto) */}
+      <div id="contract-print"
+        aria-hidden
         style={{
+          position: 'fixed',
+          left: '-99999px',
+          top: 0,
+          width: '794px',
           background: '#ffffff',
-          borderColor: 'var(--border)',
-          boxShadow: '0 2px 12px rgba(0,0,0,0.07)',
-        }}
-      >
-        <style>{DOCUMENT_STYLES}</style>
-        <div className="px-6 sm:px-10 py-7 sm:py-10">
-          <div dangerouslySetInnerHTML={{ __html: html }} />
-        </div>
+          color: '#0D1117',
+          fontFamily: "Georgia, 'Times New Roman', serif",
+          padding: '24px',
+          pointerEvents: 'none',
+        }}>
+        <div dangerouslySetInnerHTML={{ __html: html }} />
       </div>
 
       <PdfPreviewModal
