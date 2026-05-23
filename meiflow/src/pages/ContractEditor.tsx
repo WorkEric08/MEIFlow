@@ -184,7 +184,7 @@ export default function ContractEditor() {
     <div className="-m-4 md:-m-5 lg:-m-6 min-h-[calc(100dvh-56px)]" style={{ background: 'var(--bg-0)' }}>
       {/* ── Barra superior do editor ── */}
       <header
-        className="sticky top-0 z-20 border-b backdrop-blur"
+        className="sticky -top-4 md:-top-5 lg:-top-6 z-20 border-b backdrop-blur"
         style={{
           background: 'color-mix(in srgb, var(--bg-1) 96%, transparent)',
           borderColor: 'var(--border)',

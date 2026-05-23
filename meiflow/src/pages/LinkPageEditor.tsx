@@ -256,8 +256,10 @@ export default function LinkPageEditor() {
     <div className="-m-4 md:-m-5 lg:-m-6 min-h-[calc(100dvh-56px)]"
       style={{ background: 'var(--bg-0)' }}>
 
-      {/* ── Header sticky com título + status + Ver página + abas ── */}
-      <header className="sticky top-0 z-30 backdrop-blur border-b"
+      {/* ── Header sticky com título + status + Ver página + abas ──
+          top negativo compensa o padding do <main> (p-4/p-5/p-6),
+          fazendo o header ficar rente ao topo real da tela. */}
+      <header className="sticky -top-4 md:-top-5 lg:-top-6 z-30 backdrop-blur border-b"
         style={{
           background: 'color-mix(in srgb, var(--bg-1) 92%, transparent)',
           borderColor: 'var(--border)',
