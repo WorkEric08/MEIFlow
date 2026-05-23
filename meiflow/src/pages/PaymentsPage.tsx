@@ -1,21 +1,38 @@
 import { useState } from 'react'
-import { CreditCard, Plus, Pencil, Trash2, CheckCircle, Calendar } from 'lucide-react'
-import { usePayments, usePaymentSummary, useMarkAsPaid, useDeletePayment, useRestoreDeletedPayment } from '@/features/payments/index'
+import { CreditCard, Plus, Pencil, Trash2, Check, Calendar } from 'lucide-react'
+import {
+  usePayments, usePaymentSummary, useMarkAsPaid, useDeletePayment, useRestoreDeletedPayment,
+} from '@/features/payments/index'
 import { useClients } from '@/features/clients/hooks'
 import { useProjects } from '@/features/projects/hooks'
 import { useToast } from '@/store/toast'
 import PaymentModal from '@/features/payments/components/PaymentModal'
 import { ConfirmModal } from '@/components/ConfirmModal'
-import { EmptyState, StatusBadge, MetricCard } from '@/components/shared'
+import { EmptyState } from '@/components/shared'
 import { SkeletonList } from '@/components/Skeleton'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import type { Payment } from '@/services/db'
+import type { Payment, PaymentStatus } from '@/services/db'
 
-type FilterStatus = 'all' | 'pending' | 'paid' | 'overdue'
+type FilterStatus = 'all' | PaymentStatus
 const FILTERS: { value: FilterStatus; label: string }[] = [
-  { value: 'all', label: 'Todos' }, { value: 'pending', label: 'Pendentes' },
-  { value: 'overdue', label: 'Atrasados' }, { value: 'paid', label: 'Pagos' },
+  { value: 'all',     label: 'Todos' },
+  { value: 'pending', label: 'Pendentes' },
+  { value: 'overdue', label: 'Atrasados' },
+  { value: 'paid',    label: 'Pagos' },
 ]
+
+// ─── Cor única por status — usada em ponto + texto auxiliar ─────
+function statusColor(status: PaymentStatus): string {
+  if (status === 'paid')    return 'var(--status-paid)'
+  if (status === 'overdue') return 'var(--status-overdue)'
+  return 'var(--status-pending)'
+}
+
+function statusLine(p: Payment): string {
+  if (p.status === 'paid')    return `Pago ${p.paidAt ? formatDate(p.paidAt) : ''}`.trim()
+  if (p.status === 'overdue') return `Atrasou ${formatDate(p.dueDate)}`
+  return `Vence ${formatDate(p.dueDate)}`
+}
 
 export default function PaymentsPage() {
   const { data: payments = [], isLoading } = usePayments()
@@ -74,24 +91,25 @@ export default function PaymentsPage() {
         </button>
       </div>
 
-      {/* ── Métricas — 3 cards em qualquer largura, otimizado para mobile ── */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5">
-        <MetricCard label="Recebido" value={formatCurrency(summary?.totalPaid ?? 0)} blueprint />
-        <MetricCard label="A receber" value={formatCurrency(summary?.totalPending ?? 0)} blueprint />
-        <MetricCard label="Atrasado" value={formatCurrency(summary?.totalOverdue ?? 0)} accent="var(--status-overdue)" blueprint />
+      {/* ── Resumo financeiro: card único com 3 colunas ── */}
+      <div className="mb-5 rounded-card border overflow-hidden grid grid-cols-3"
+        style={{ background: 'var(--bg-1)', borderColor: 'var(--border)' }}>
+        <SummaryCol label="Recebido"  value={summary?.totalPaid ?? 0}    color="var(--status-paid)"     divider />
+        <SummaryCol label="A receber" value={summary?.totalPending ?? 0}                                divider />
+        <SummaryCol label="Atrasado"  value={summary?.totalOverdue ?? 0} color="var(--status-overdue)" />
       </div>
 
-      {/* ── Filtros — scroll horizontal em mobile ── */}
+      {/* ── Filtros ── */}
       <div className="mb-4 -mx-4 sm:mx-0 overflow-x-auto scrollbar-hide">
-        <div className="flex gap-2 px-4 sm:px-0 pb-1">
+        <div className="flex gap-1.5 px-4 sm:px-0 pb-1">
           {FILTERS.map((f) => {
             const active = filter === f.value
             return (
               <button key={f.value} onClick={() => setFilter(f.value)}
                 data-pwa-tap
-                className="shrink-0 px-3.5 py-2 rounded-badge text-xs font-semibold transition-all whitespace-nowrap min-h-[36px]"
+                className="shrink-0 px-3 py-1.5 rounded-badge text-xs font-semibold transition-all whitespace-nowrap"
                 style={{
-                  background: active ? 'var(--primary)' : 'var(--bg-1)',
+                  background: active ? 'var(--primary)' : 'transparent',
                   color: active ? '#fff' : 'var(--text-secondary)',
                   border: `1px solid ${active ? 'var(--primary)' : 'var(--border)'}`,
                 }}>
@@ -102,6 +120,7 @@ export default function PaymentsPage() {
         </div>
       </div>
 
+      {/* ── Lista ── */}
       {isLoading ? (
         <SkeletonList variant="payment" count={3} />
       ) : filtered.length === 0 ? (
@@ -117,104 +136,81 @@ export default function PaymentsPage() {
             </button>
           } />
       ) : (
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-2">
           {filtered.map((p) => {
             const client  = clients.find((c) => c.id === p.clientId)
             const project = projects.find((pr) => pr.id === p.projectId)
-            const isPaid    = p.status === 'paid'
-            const isOverdue = p.status === 'overdue'
-            const dueColor  = isOverdue ? 'var(--status-overdue)' : isPaid ? 'var(--status-paid)' : 'var(--text-secondary)'
+            const color = statusColor(p.status)
+            const isPaid = p.status === 'paid'
             return (
-              <div key={p.id}
-                className="rounded-card border overflow-hidden relative"
+              <article key={p.id}
+                className="rounded-card border overflow-hidden transition-colors"
                 style={{ background: 'var(--bg-1)', borderColor: 'var(--border)' }}>
-                {/* Barra lateral colorida de status — sinal visual rápido */}
-                <span
-                  className="absolute left-0 top-0 bottom-0 w-1"
-                  style={{
-                    background: isPaid ? 'var(--status-paid)'
-                      : isOverdue ? 'var(--status-overdue)'
-                      : 'var(--status-pending)',
-                  }}
-                />
 
-                {/* Topo: descrição + status badge */}
-                <div className="px-4 pt-3.5 pb-2 pl-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="text-[15px] font-semibold leading-snug min-w-0 flex-1 break-words"
+                {/* Linha principal — uma só, compacta */}
+                <div className="px-4 py-3 flex items-start gap-3">
+                  {/* Ponto de status */}
+                  <span aria-hidden
+                    className="w-2 h-2 rounded-full shrink-0 mt-1.5"
+                    style={{ background: color }} />
+
+                  {/* Descrição + cliente/projeto */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold leading-snug break-words"
                       style={{ color: 'var(--text-primary)' }}>
                       {p.description}
                     </p>
-                    <StatusBadge status={p.status} />
-                  </div>
-                  {/* Cliente em destaque, projeto secundário */}
-                  <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs leading-snug">
-                    <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>
-                      {client?.name ?? 'Cliente removido'}
-                    </span>
-                    {project && (
-                      <>
-                        <span style={{ color: 'var(--text-tertiary)' }}>·</span>
-                        <span style={{ color: 'var(--text-tertiary)' }}>{project.name}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Linha de destaque: VALOR (esquerda, grande) + VENCIMENTO (direita) */}
-                <div className="px-4 pl-5 pt-1 pb-3 flex items-end justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-semibold uppercase tracking-widest"
+                    <p className="text-xs mt-0.5 truncate"
                       style={{ color: 'var(--text-tertiary)' }}>
-                      {isPaid ? 'Valor recebido' : 'Valor'}
+                      {client?.name ?? 'Cliente removido'}
+                      {project && ` · ${project.name}`}
                     </p>
-                    <p className="font-mono text-xl font-extrabold tabular-nums leading-tight mt-0.5 break-all"
-                      style={{ color: isOverdue ? 'var(--status-overdue)' : 'var(--text-primary)' }}>
+                  </div>
+
+                  {/* Valor + status/data */}
+                  <div className="text-right shrink-0">
+                    <p className="font-mono text-base font-bold tabular-nums leading-tight"
+                      style={{ color: 'var(--text-primary)' }}>
                       {formatCurrency(p.amount)}
                     </p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-[10px] font-semibold uppercase tracking-widest"
-                      style={{ color: 'var(--text-tertiary)' }}>
-                      {isPaid ? 'Pago em' : isOverdue ? 'Atrasou em' : 'Vence em'}
+                    <p className="text-[11px] font-medium mt-0.5 inline-flex items-center gap-1"
+                      style={{ color }}>
+                      <Calendar size={10} aria-hidden />
+                      {statusLine(p)}
                     </p>
-                    <div className="flex items-center justify-end gap-1 mt-0.5 font-mono text-xs font-semibold tabular-nums"
-                      style={{ color: dueColor }}>
-                      <Calendar size={12} />
-                      <span>{formatDate(p.dueDate)}</span>
-                    </div>
                   </div>
                 </div>
 
-                {/* Rodapé: ações */}
+                {/* Ações — compactas, ícone-only para secundárias */}
                 <div className="flex items-stretch border-t" style={{ borderColor: 'var(--border)' }}>
-                  {p.status !== 'paid' && (
-                    <>
-                      <button onClick={() => markAsPaid.mutate(p.id)}
-                        data-pwa-tap
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-all hover:opacity-70"
-                        style={{ color: 'var(--status-paid)' }}>
-                        <CheckCircle size={13} /> Marcar pago
-                      </button>
-                      <div className="w-px" style={{ background: 'var(--border)' }} />
-                    </>
+                  {!isPaid ? (
+                    <button onClick={() => markAsPaid.mutate(p.id)}
+                      data-pwa-tap
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold transition-all hover:opacity-70"
+                      style={{ color: 'var(--status-paid)' }}>
+                      <Check size={13} /> Marcar como pago
+                    </button>
+                  ) : (
+                    <div className="flex-1" />
                   )}
                   <button onClick={() => handleEdit(p)}
                     data-pwa-tap
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium transition-all hover:opacity-70"
-                    style={{ color: 'var(--text-secondary)' }}>
-                    <Pencil size={13} /> Editar
+                    aria-label="Editar"
+                    title="Editar"
+                    className="px-4 flex items-center justify-center transition-all hover:opacity-70 border-l"
+                    style={{ color: 'var(--text-secondary)', borderColor: 'var(--border)' }}>
+                    <Pencil size={13} />
                   </button>
-                  <div className="w-px" style={{ background: 'var(--border)' }} />
                   <button onClick={() => handleDelete(p)}
                     data-pwa-tap
                     aria-label="Remover"
-                    className="px-4 flex items-center justify-center transition-all hover:opacity-70"
-                    style={{ color: 'var(--status-overdue)' }}>
-                    <Trash2 size={14} />
+                    title="Remover"
+                    className="px-4 flex items-center justify-center transition-all hover:opacity-70 border-l"
+                    style={{ color: 'var(--status-overdue)', borderColor: 'var(--border)' }}>
+                    <Trash2 size={13} />
                   </button>
                 </div>
-              </div>
+              </article>
             )
           })}
         </div>
@@ -230,6 +226,27 @@ export default function PaymentsPage() {
         onConfirm={confirmDeletion}
         onCancel={() => setConfirmDelete(null)}
       />
+    </div>
+  )
+}
+
+// ─── Coluna do resumo financeiro ────────────────────────────────
+function SummaryCol({
+  label, value, color, divider,
+}: {
+  label: string; value: number; color?: string; divider?: boolean
+}) {
+  return (
+    <div className="px-3 sm:px-4 py-3.5"
+      style={{ borderRight: divider ? '1px solid var(--border)' : 'none' }}>
+      <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider mb-1.5"
+        style={{ color: 'var(--text-tertiary)' }}>
+        {label}
+      </p>
+      <p className="font-mono text-sm sm:text-base font-bold tabular-nums leading-none break-all"
+        style={{ color: color ?? 'var(--text-primary)' }}>
+        {formatCurrency(value)}
+      </p>
     </div>
   )
 }
